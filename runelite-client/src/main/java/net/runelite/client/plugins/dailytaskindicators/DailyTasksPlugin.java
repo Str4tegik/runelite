@@ -36,6 +36,7 @@ import net.runelite.api.GameState;
 import net.runelite.api.Varbits;
 import net.runelite.api.events.ConfigChanged;
 import net.runelite.api.events.GameStateChanged;
+import net.runelite.api.events.GameTick;
 import net.runelite.client.chat.ChatColor;
 import net.runelite.client.chat.ChatColorType;
 import net.runelite.client.chat.ChatMessageBuilder;
@@ -61,6 +62,7 @@ public class DailyTasksPlugin extends Plugin
 	@Inject
 	private ChatMessageManager chatMessageManager;
 
+	private boolean check;
 	private boolean hasSentHerbMsg, hasSentStavesMsg, hasSentEssenceMsg;
 
 	@Provides
@@ -72,6 +74,7 @@ public class DailyTasksPlugin extends Plugin
 	@Override
 	protected void startUp() throws Exception
 	{
+		check = false;
 		hasSentHerbMsg = hasSentStavesMsg = hasSentEssenceMsg = false;
 		cacheColors();
 	}
@@ -105,23 +108,38 @@ public class DailyTasksPlugin extends Plugin
 	@Subscribe
 	public void onGameStateChanged(GameStateChanged event)
 	{
-		if (event.getGameState().equals(GameState.LOGGED_IN))
+		switch (event.getGameState())
 		{
-			if (config.showHerbBoxes() && !hasSentHerbMsg && checkCanCollectHerbBox())
-			{
-				sendChatMessage("You have herb boxes waiting to be collected at NMZ.");
-				hasSentHerbMsg = true;
-			}
-			if (config.showStaves() && !hasSentStavesMsg && checkCanCollectStaves())
-			{
-				sendChatMessage("You have staves waiting to be collected from Zaff.");
-				hasSentStavesMsg = true;
-			}
-			if (config.showEssence() && !hasSentEssenceMsg && checkCanCollectEssence())
-			{
-				sendChatMessage("You have pure essence waiting to be collected from Wizard Cromperty.");
-				hasSentEssenceMsg = true;
-			}
+			case HOPPING:
+			case LOGGING_IN:
+				check = true;
+		}
+	}
+
+	@Subscribe
+	public void onGameTick(GameTick gameTick)
+	{
+		if (!check)
+		{
+			return;
+		}
+
+		check = false;
+
+		if (config.showHerbBoxes() && !hasSentHerbMsg && checkCanCollectHerbBox())
+		{
+			sendChatMessage("You have herb boxes waiting to be collected at NMZ.");
+			hasSentHerbMsg = true;
+		}
+		if (config.showStaves() && !hasSentStavesMsg && checkCanCollectStaves())
+		{
+			sendChatMessage("You have staves waiting to be collected from Zaff.");
+			hasSentStavesMsg = true;
+		}
+		if (config.showEssence() && !hasSentEssenceMsg && checkCanCollectEssence())
+		{
+			sendChatMessage("You have pure essence waiting to be collected from Wizard Cromperty.");
+			hasSentEssenceMsg = true;
 		}
 	}
 
