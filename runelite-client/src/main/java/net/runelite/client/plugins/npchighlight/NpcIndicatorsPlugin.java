@@ -196,7 +196,7 @@ public class NpcIndicatorsPlugin extends Plugin
 		{
 			highlightedNpcs.clear();
 			deadNpcsToDisplay.clear();
-			memorizedNpcs.values().forEach(x -> x.setDiedOnTick(-1));
+			memorizedNpcs.forEach((id, npc) -> npc.setDiedOnTick(-1));
 			lastPlayerLocation = null;
 			skipNextSpawnCheck = true;
 		}
@@ -283,22 +283,24 @@ public class NpcIndicatorsPlugin extends Plugin
 	@Subscribe
 	public void onNpcDespawned(NpcDespawned npcDespawned)
 	{
-		NPC npc = npcDespawned.getNpc();
+		final NPC npc = npcDespawned.getNpc();
+
 		if (memorizedNpcs.containsKey(npc.getIndex()))
 		{
 			despawnedNpcsThisTick.add(npc);
 		}
+
 		highlightedNpcs.remove(npc);
 	}
 
 	@Subscribe
 	public void onGraphicsObjectCreated(GraphicsObjectCreated event)
 	{
-		GraphicsObject go = event.getGraphicsObject();
+		final GraphicsObject go = event.getGraphicsObject();
+
 		if (go.getId() == GraphicID.GREY_BUBBLE_TELEPORT)
 		{
-			WorldPoint wp = WorldPoint.fromLocal(client, go.getLocation());
-			teleportGraphicsObjectSpawnedThisTick.add(wp);
+			teleportGraphicsObjectSpawnedThisTick.add(WorldPoint.fromLocal(client, go.getLocation()));
 		}
 	}
 
@@ -307,8 +309,8 @@ public class NpcIndicatorsPlugin extends Plugin
 	{
 		removeOldHighlightedRespawns();
 		validateSpawnedNpcs();
-		this.lastTickUpdate = Instant.now();
-		this.lastPlayerLocation = client.getLocalPlayer().getWorldLocation();
+		lastTickUpdate = Instant.now();
+		lastPlayerLocation = client.getLocalPlayer().getWorldLocation();
 	}
 
 	@Override
@@ -317,25 +319,62 @@ public class NpcIndicatorsPlugin extends Plugin
 		return Arrays.asList(npcSceneOverlay, npcMinimapOverlay);
 	}
 
-	private void memorizeNpc(NPC npc)
-	{
-		int npcIndex = npc.getIndex();
-		if (!memorizedNpcs.containsKey(npcIndex))
-		{
-			memorizedNpcs.put(npcIndex, new MemorizedNpc(npc));
-		}
-	}
-
-	private boolean isInViewRange(WorldPoint wp1, WorldPoint wp2)
+	private static boolean isInViewRange(WorldPoint wp1, WorldPoint wp2)
 	{
 		int distance = wp1.distanceTo(wp2);
 		return distance < MAX_ACTOR_VIEW_RANGE;
 	}
 
+	private static WorldPoint getWorldLocationBehind(NPC npc)
+	{
+		final int orientation = npc.getOrientation() / 256;
+		int dx = 0, dy = 0;
+
+		switch (orientation)
+		{
+			case 0: // South
+				dy = -1;
+				break;
+			case 1: // Southwest
+				dx = -1;
+				dy = -1;
+				break;
+			case 2: // West
+				dx = -1;
+				break;
+			case 3: // Northwest
+				dx = -1;
+				dy = 1;
+				break;
+			case 4: // North
+				dy = 1;
+				break;
+			case 5: // Northeast
+				dx = 1;
+				dy = 1;
+				break;
+			case 6: // East
+				dx = 1;
+				break;
+			case 7: // Southeast
+				dx = 1;
+				dy = -1;
+				break;
+		}
+
+		final WorldPoint currWP = npc.getWorldLocation();
+		return new WorldPoint(currWP.getX() - dx, currWP.getY() - dy, currWP.getPlane());
+	}
+
+	private void memorizeNpc(NPC npc)
+	{
+		final int npcIndex = npc.getIndex();
+		memorizedNpcs.putIfAbsent(npcIndex, new MemorizedNpc(npc));
+	}
+
 	private void removeOldHighlightedRespawns()
 	{
-		deadNpcsToDisplay.values().removeIf(x ->
-			x.getDiedOnTick() + x.getRespawnTime() <= client.getTickCount() + 1);
+		deadNpcsToDisplay.values().removeIf(x -> x.getDiedOnTick() + x.getRespawnTime() <= client.getTickCount() + 1);
 	}
 
 	void updateNpcMenuOptions(boolean pressed)
@@ -376,7 +415,7 @@ public class NpcIndicatorsPlugin extends Plugin
 		outer:
 		for (NPC npc : client.getNpcs())
 		{
-			String npcName = npc.getName();
+			final String npcName = npc.getName();
 
 			if (npcName == null)
 			{
@@ -404,46 +443,6 @@ public class NpcIndicatorsPlugin extends Plugin
 		}
 	}
 
-	private WorldPoint getWorldLocationBehind(NPC npc)
-	{
-		int dx = 0, dy = 0;
-		int orientation = npc.getOrientation() / 256;
-		switch (orientation)
-		{
-			case 0: // South
-				dy = -1;
-				break;
-			case 1: // Southwest
-				dx = -1;
-				dy = -1;
-				break;
-			case 2: // West
-				dx = -1;
-				break;
-			case 3: // Northwest
-				dx = -1;
-				dy = 1;
-				break;
-			case 4: // North
-				dy = 1;
-				break;
-			case 5: // Northeast
-				dx = 1;
-				dy = 1;
-				break;
-			case 6: // East
-				dx = 1;
-				break;
-			case 7: // Southeast
-				dx = 1;
-				dy = -1;
-				break;
-		}
-
-		WorldPoint currWP = npc.getWorldLocation();
-		return new WorldPoint(currWP.getX() - dx, currWP.getY() - dy, currWP.getPlane());
-	}
-
 	private void validateSpawnedNpcs()
 	{
 		if (skipNextSpawnCheck)
@@ -454,7 +453,7 @@ public class NpcIndicatorsPlugin extends Plugin
 		{
 			for (NPC npc : despawnedNpcsThisTick)
 			{
-				if (teleportGraphicsObjectSpawnedThisTick.size() > 0)
+				if (!teleportGraphicsObjectSpawnedThisTick.isEmpty())
 				{
 					if (teleportGraphicsObjectSpawnedThisTick.contains(npc.getWorldLocation()))
 					{
@@ -465,10 +464,12 @@ public class NpcIndicatorsPlugin extends Plugin
 
 				if (isInViewRange(client.getLocalPlayer().getWorldLocation(), npc.getWorldLocation()))
 				{
-					MemorizedNpc mn = memorizedNpcs.get(npc.getIndex());
+					final MemorizedNpc mn = memorizedNpcs.get(npc.getIndex());
+
 					if (mn != null)
 					{
 						mn.setDiedOnTick(client.getTickCount() + 1); // This runs before tickCounter updates, so we add 1
+
 						if (!mn.getPossibleRespawnLocations().isEmpty())
 						{
 							deadNpcsToDisplay.put(mn.getNpcIndex(), mn);
@@ -479,7 +480,7 @@ public class NpcIndicatorsPlugin extends Plugin
 
 			for (NPC npc : spawnedNpcsThisTick)
 			{
-				if (teleportGraphicsObjectSpawnedThisTick.size() > 0)
+				if (!teleportGraphicsObjectSpawnedThisTick.isEmpty())
 				{
 					if (teleportGraphicsObjectSpawnedThisTick.contains(npc.getWorldLocation()) ||
 						teleportGraphicsObjectSpawnedThisTick.contains(getWorldLocationBehind(npc)))
@@ -491,18 +492,19 @@ public class NpcIndicatorsPlugin extends Plugin
 
 				if (isInViewRange(lastPlayerLocation, npc.getWorldLocation()))
 				{
-					MemorizedNpc mn = memorizedNpcs.get(npc.getIndex());
+					final MemorizedNpc mn = memorizedNpcs.get(npc.getIndex());
+
 					if (mn.getDiedOnTick() != -1)
 					{
 						mn.setRespawnTime(client.getTickCount() + 1 - mn.getDiedOnTick());
 						mn.setDiedOnTick(-1);
 					}
 
-					WorldPoint npcLocation = npc.getWorldLocation();
+					final WorldPoint npcLocation = npc.getWorldLocation();
 
 					// An NPC can move in the same tick as it spawns, so we also have
 					// to consider whatever tile is behind the npc
-					WorldPoint possibleOtherNpcLocation = getWorldLocationBehind(npc);
+					final WorldPoint possibleOtherNpcLocation = getWorldLocationBehind(npc);
 
 					mn.getPossibleRespawnLocations().removeIf(x ->
 						x.distanceTo(npcLocation) != 0 && x.distanceTo(possibleOtherNpcLocation) != 0);
