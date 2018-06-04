@@ -65,13 +65,15 @@ class MemorizedNpc
 	{
 		this.npcName = npc.getName();
 		this.npcIndex = npc.getIndex();
-		NPCComposition composition = npc.getTransformedComposition();
+		this.possibleRespawnLocations = new ArrayList<>();
+		this.respawnTime = -1;
+		this.diedOnTick = -1;
+
+		final NPCComposition composition = npc.getTransformedComposition();
+
 		if (composition != null)
 		{
 			this.npcSize = composition.getSize();
 		}
-		this.possibleRespawnLocations = new ArrayList<>();
-		this.respawnTime = -1;
-		this.diedOnTick = -1;
 	}
 }
