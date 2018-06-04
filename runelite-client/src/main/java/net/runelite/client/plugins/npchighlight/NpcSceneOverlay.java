@@ -53,13 +53,10 @@ public class NpcSceneOverlay extends Overlay
 	// a dark background
 	private static final Color TEXT_COLOR = Color.WHITE;
 
-	/**
-	 * Estimated time of a game tick in seconds
-	 */
+	// Estimated time of a game tick in seconds
 	private static final double ESTIMATED_TICK_LENGTH = 0.6;
 
-	private static final NumberFormat TIME_LEFT_FORMATTER =
-		DecimalFormat.getInstance(Locale.US);
+	private static final NumberFormat TIME_LEFT_FORMATTER = DecimalFormat.getInstance(Locale.US);
 
 	static
 	{
@@ -83,7 +80,10 @@ public class NpcSceneOverlay extends Overlay
 	@Override
 	public Dimension render(Graphics2D graphics)
 	{
-		renderNpcRespawns(graphics);
+		if (config.showRespawnTimer())
+		{
+			plugin.getDeadNpcsToDisplay().forEach((id, npc) -> renderNpcRespawn(npc, graphics));
+		}
 
 		for (NPC npc : plugin.getHighlightedNpcs())
 		{
@@ -93,52 +93,53 @@ public class NpcSceneOverlay extends Overlay
 		return null;
 	}
 
-	private void renderNpcRespawns(Graphics2D graphics)
+	private void renderNpcRespawn(final MemorizedNpc npc, final Graphics2D graphics)
 	{
-		if (config.showRespawnTimer())
+		if (npc.getPossibleRespawnLocations().isEmpty())
 		{
-			plugin.getDeadNpcsToDisplay().values().forEach(x ->
-			{
-				if (x.getPossibleRespawnLocations().isEmpty())
-				{
-					return;
-				}
+			return;
+		}
 
-				WorldPoint respawnLocation = x.getPossibleRespawnLocations().get(0);
-				LocalPoint lp = LocalPoint.fromWorld(client,
-					respawnLocation.getX(), respawnLocation.getY());
-				if (lp != null)
-				{
-					Color color = config.getHighlightColor();
+		final WorldPoint respawnLocation = npc.getPossibleRespawnLocations().get(0);
+		final LocalPoint lp = LocalPoint.fromWorld(client, respawnLocation.getX(), respawnLocation.getY());
 
-					LocalPoint centerLp = new LocalPoint(
-						lp.getX() + Perspective.LOCAL_TILE_SIZE * (x.getNpcSize() - 1) / 2,
-						lp.getY() + Perspective.LOCAL_TILE_SIZE * (x.getNpcSize() - 1) / 2);
-					Polygon poly = Perspective.getCanvasTileAreaPoly(client, centerLp, x.getNpcSize());
-					if (poly != null)
-					{
-						OverlayUtil.renderPolygon(graphics, poly, color);
-					}
+		if (lp == null)
+		{
+			return;
+		}
 
-					Instant now = Instant.now();
-					double timeLeft = ((x.getDiedOnTick() + x.getRespawnTime()) -
-						client.getTickCount()) * ESTIMATED_TICK_LENGTH -
-						(now.toEpochMilli() - plugin.getLastTickUpdate().toEpochMilli()) / 1000.0;
-					timeLeft = Math.max(0.0, timeLeft);
-					String timeLeftStr = TIME_LEFT_FORMATTER.format(timeLeft);
-					int textWidth = graphics.getFontMetrics().stringWidth(timeLeftStr);
-					int textHeight = graphics.getFontMetrics().getAscent();
-					Point canvasPoint = Perspective.worldToCanvas(client,
-						centerLp.getX(), centerLp.getY(), respawnLocation.getPlane());
-					if (canvasPoint != null)
-					{
-						Point canvasCenterPoint = new Point(
-							canvasPoint.getX() - textWidth / 2,
-							canvasPoint.getY() + textHeight / 2);
-						OverlayUtil.renderTextLocation(graphics, canvasCenterPoint, timeLeftStr, TEXT_COLOR);
-					}
-				}
-			});
+		final Color color = config.getHighlightColor();
+
+		final LocalPoint centerLp = new LocalPoint(
+			lp.getX() + Perspective.LOCAL_TILE_SIZE * (npc.getNpcSize() - 1) / 2,
+			lp.getY() + Perspective.LOCAL_TILE_SIZE * (npc.getNpcSize() - 1) / 2);
+
+		final Polygon poly = Perspective.getCanvasTileAreaPoly(client, centerLp, npc.getNpcSize());
+
+		if (poly != null)
+		{
+			OverlayUtil.renderPolygon(graphics, poly, color);
+		}
+
+		final Instant now = Instant.now();
+		final double baseTick = (npc.getDiedOnTick() + npc.getRespawnTime()) - client.getTickCount() * ESTIMATED_TICK_LENGTH;
+		final double sinceLast = (now.toEpochMilli() - plugin.getLastTickUpdate().toEpochMilli()) / 1000.0;
+		final double timeLeft = Math.max(0.0, baseTick - sinceLast);
+		final String timeLeftStr = TIME_LEFT_FORMATTER.format(timeLeft);
+
+		final int textWidth = graphics.getFontMetrics().stringWidth(timeLeftStr);
+		final int textHeight = graphics.getFontMetrics().getAscent();
+
+		final Point canvasPoint = Perspective
+			.worldToCanvas(client, centerLp.getX(), centerLp.getY(), respawnLocation.getPlane());
+
+		if (canvasPoint != null)
+		{
+			final Point canvasCenterPoint = new Point(
+				canvasPoint.getX() - textWidth / 2,
+				canvasPoint.getY() + textHeight / 2);
+
+			OverlayUtil.renderTextLocation(graphics, canvasCenterPoint, timeLeftStr, TEXT_COLOR);
 		}
 	}
 
