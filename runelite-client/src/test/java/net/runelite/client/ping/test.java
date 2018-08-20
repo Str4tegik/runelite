@@ -20,7 +20,7 @@ public class test
 		int datalen = dataStr.length()+1;
 		Pointer data = new Memory(datalen);
 		data.setString(0L, dataStr);
-		IcmpEchoReply icmpEchoReply = new IcmpEchoReply(); // new Memory(IcmpEchoReply.SIZE + datalen));
+		IcmpEchoReply icmpEchoReply = new IcmpEchoReply(new Memory(IcmpEchoReply.SIZE + datalen));
 		int packed = (address[0] & 0xff) | ((address[1] & 0xff)<<8) | ((address[2] & 0xff)<<16) | ((address[3] & 0xff)<<24);
 		int ret = ipHlpAPI.IcmpSendEcho(ptr, packed, data, (short)(datalen),0L, icmpEchoReply, IcmpEchoReply.SIZE + datalen, 1000);
 		System.out.println("RET " + ret);

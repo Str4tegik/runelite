@@ -1,5 +1,6 @@
 package net.runelite.client.ping;
 
+import com.sun.jna.Pointer;
 import com.sun.jna.Structure;
 import com.sun.jna.platform.win32.WinDef;
 import java.util.Arrays;
@@ -20,6 +21,11 @@ public class IcmpEchoReply extends Structure
 	public WinDef.UCHAR Flags;
 	public WinDef.UCHAR OptionsSize;
 	public WinDef.PVOID OptionsData;
+
+	public IcmpEchoReply(Pointer p)
+	{
+		super(p);
+	}
 
 	@Override
 	protected List<String> getFieldOrder()
