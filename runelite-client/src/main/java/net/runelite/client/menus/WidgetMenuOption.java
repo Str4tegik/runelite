@@ -32,6 +32,10 @@ import net.runelite.client.util.ColorUtil;
 public final class WidgetMenuOption
 {
 	/**
+	 * The color that the menuTarget should be. Defaults to the brownish color that most menu options have.
+	 */
+	private static Color color = Color.decode("#ff9040");
+	/**
 	 * The left hand text to be displayed on the menu option. Ex. the menuOption of "Drop Bones" is "Drop"
 	 */
 	private String menuOption;
@@ -39,10 +43,6 @@ public final class WidgetMenuOption
 	 * The right hand text to be displayed on the menu option Ex. the menuTarget of "Drop Bones" is "Bones"
 	 */
 	private String menuTarget;
-	/**
-	 * The color that the menuTarget should be. Defaults to the brownish color that most menu options have.
-	 */
-	private Color color = Color.decode("#ff9040");
 
 	/**
 	 * The widget to add the option to
@@ -73,9 +73,9 @@ public final class WidgetMenuOption
 	 *
 	 * @param target The target text without color code.
 	 */
-	public void setMenuTarget(String target)
+	private void setMenuTarget(String target)
 	{
-		menuTarget = ColorUtil.wrapWithColorTag(target, color);
+		menuTarget = applyTargetMenuColor(target);
 	}
 
 	public String getMenuOption()
@@ -101,5 +101,10 @@ public final class WidgetMenuOption
 	public void setColor(Color col)
 	{
 		color = col;
+	}
+
+	public static String applyTargetMenuColor(String target)
+	{
+		return ColorUtil.wrapWithColorTag(target, color);
 	}
 }
