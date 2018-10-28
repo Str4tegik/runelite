@@ -44,6 +44,7 @@ public class WorldClient
 	public WorldResult lookupWorlds() throws IOException
 	{
 		HttpUrl url = RuneLiteAPI.getApiBase().newBuilder()
+			.addPathSegment("c")
 			.addPathSegment("worlds")
 			.build();
 

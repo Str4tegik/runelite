@@ -36,7 +36,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/worlds")
 @Slf4j
 public class WorldController
 {
@@ -45,9 +44,15 @@ public class WorldController
 
 	private WorldResult worldResult;
 
-	@RequestMapping
+	@RequestMapping("/c/worlds")
 	public ResponseEntity<WorldResult> listWorlds() throws IOException
 	{
+		if (worldResult == null)
+		{
+			return ResponseEntity.notFound()
+				.build();
+		}
+
 		return ResponseEntity.ok()
 			.cacheControl(CacheControl.maxAge(10, TimeUnit.MINUTES).cachePublic())
 			.body(worldResult);
