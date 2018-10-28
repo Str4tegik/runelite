@@ -42,6 +42,7 @@ public class FeedClient
 	public FeedResult lookupFeed() throws IOException
 	{
 		HttpUrl url = RuneLiteAPI.getApiBase().newBuilder()
+			.addPathSegment("c")
 			.addPathSegment("feed")
 			.build();
 
