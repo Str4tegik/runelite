@@ -2,6 +2,7 @@ package net.runelite.mixins;
 
 import net.runelite.api.Model;
 import net.runelite.api.Perspective;
+import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.mixins.Inject;
 import net.runelite.api.mixins.Mixin;
 import net.runelite.api.mixins.Shadow;
@@ -20,6 +21,7 @@ public abstract class ClickboxMixin implements RSClient
 	private static final int MAX_ENTITES_AT_MOUSE = 1000;
 	private static final int CLICKBOX_CLOSE = 50;
 	private static final int CLICKBOX_FAR = 3500;
+	private static final int OBJECT_INTERACTION_FAR = 25; // Max distance, in tiles, from player
 
 	@Inject
 	private static final int[] rl$modelViewportXs = new int[4700];
@@ -33,6 +35,7 @@ public abstract class ClickboxMixin implements RSClient
 		RSModel model = (RSModel) rlModel;
 		boolean hasFlag = hash != 0L && (int) (hash >>> 16 & 1L) != 1;
 		boolean viewportContainsMouse = client.getViewportContainsMouse();
+		LocalPoint location = client.getLocalPlayer().getLocalLocation();
 
 		if (!hasFlag || !viewportContainsMouse || client.getOculusOrbState() != 0)
 		{
@@ -41,6 +44,16 @@ public abstract class ClickboxMixin implements RSClient
 
 		boolean bb = boundingboxCheck(model, _x, _y, _z);
 		if (!bb)
+		{
+			return;
+		}
+
+		final int modelX = client.getCameraX2() + _x;
+		final int modelZ = client.getCameraZ2() + _z;
+
+		final int dx = location.getX() - modelX;
+		final int dy = location.getY() - modelZ;
+		if (Math.sqrt(dx * dx + dy * dy) > OBJECT_INTERACTION_FAR * Perspective.LOCAL_TILE_SIZE)
 		{
 			return;
 		}
