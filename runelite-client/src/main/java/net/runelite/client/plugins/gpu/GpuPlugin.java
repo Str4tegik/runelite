@@ -81,6 +81,7 @@ import static net.runelite.client.plugins.gpu.GLUtil.glGenVertexArrays;
 import static net.runelite.client.plugins.gpu.GLUtil.inputStreamToString;
 import net.runelite.client.plugins.gpu.template.Template;
 import net.runelite.client.ui.DrawManager;
+import net.runelite.client.util.OSType;
 
 @PluginDescriptor(
 	name = "GPU",
@@ -249,7 +250,7 @@ public class GpuPlugin extends Plugin implements DrawCallbacks
 					throw new GLException("Unable to make context current");
 				}
 
-				if (jawtWindow.getLock().isLocked())
+				if (OSType.getOSType() == OSType.Linux && jawtWindow.getLock().isLocked())
 				{
 					jawtWindow.unlockSurface();
 				}
@@ -323,7 +324,7 @@ public class GpuPlugin extends Plugin implements DrawCallbacks
 			client.setGpu(false);
 			client.setDrawCallbacks(null);
 
-			if (jawtWindow.getLock().getHoldCount() != NativeSurface.LOCK_SURFACE_NOT_READY)
+			if (OSType.getOSType() == OSType.Linux && jawtWindow.getLock().getHoldCount() != NativeSurface.LOCK_SURFACE_NOT_READY)
 			{
 				jawtWindow.lockSurface();
 			}
