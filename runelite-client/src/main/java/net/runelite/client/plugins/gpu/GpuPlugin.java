@@ -134,7 +134,7 @@ public class GpuPlugin extends Plugin implements DrawCallbacks
 	private int glSmallComputeShader;
 
 	private int glUnorderedComputeProgram;
-	private int glUnorrderedComputeShader;
+	private int glUnorderedComputeShader;
 
 	private int vaoHandle;
 
@@ -218,6 +218,7 @@ public class GpuPlugin extends Plugin implements DrawCallbacks
 			try
 			{
 				bufferId = uvBufferId = uniformBufferId = -1;
+				unorderedModels = smallModels = largeModels = 0;
 
 				vertexBuffer = new GpuIntBuffer();
 				uvBuffer = new GpuFloatBuffer();
@@ -380,8 +381,10 @@ public class GpuPlugin extends Plugin implements DrawCallbacks
 
 			vertexBuffer = null;
 			uvBuffer = null;
+
 			modelBufferSmall = null;
 			modelBuffer = null;
+			modelBufferUnordered = null;
 
 			// force main buffer provider rebuild to turn off alpha channel
 			client.resizeCanvas();
@@ -423,10 +426,10 @@ public class GpuPlugin extends Plugin implements DrawCallbacks
 		GLUtil.loadComputeShader(gl, glSmallComputeProgram, glSmallComputeShader, source);
 
 		glUnorderedComputeProgram = gl.glCreateProgram();
-		glUnorrderedComputeShader = gl.glCreateShader(gl.GL_COMPUTE_SHADER);
+		glUnorderedComputeShader = gl.glCreateShader(gl.GL_COMPUTE_SHADER);
 		template = new Template(resourceLoader);
 		source = template.process(resourceLoader.apply("comp_unordered.glsl"));
-		GLUtil.loadComputeShader(gl, glUnorderedComputeProgram, glUnorrderedComputeShader, source);
+		GLUtil.loadComputeShader(gl, glUnorderedComputeProgram, glUnorderedComputeShader, source);
 
 		glUiProgram = gl.glCreateProgram();
 		glUiVertexShader = gl.glCreateShader(gl.GL_VERTEX_SHADER);
@@ -480,6 +483,12 @@ public class GpuPlugin extends Plugin implements DrawCallbacks
 
 		gl.glDeleteProgram(glSmallComputeProgram);
 		glSmallComputeProgram = -1;
+
+		gl.glDeleteShader(glUnorderedComputeShader);
+		glUnorderedComputeShader = -1;
+
+		gl.glDeleteProgram(glUnorderedComputeProgram);
+		glUnorderedComputeProgram = -1;
 
 		///
 
