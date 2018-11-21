@@ -29,7 +29,6 @@ import com.google.inject.Provides;
 import com.jogamp.nativewindow.awt.AWTGraphicsConfiguration;
 import com.jogamp.nativewindow.awt.JAWTWindow;
 import com.jogamp.opengl.GL;
-import static com.jogamp.opengl.GL2ES2.GL_DEBUG_OUTPUT;
 import static com.jogamp.opengl.GL3ES3.GL_SHADER_STORAGE_BARRIER_BIT;
 import com.jogamp.opengl.GL4;
 import com.jogamp.opengl.GLCapabilities;
@@ -134,6 +133,9 @@ public class GpuPlugin extends Plugin implements DrawCallbacks
 	private int glSmallComputeProgram;
 	private int glSmallComputeShader;
 
+	private int glUnorderedComputeProgram;
+	private int glUnorrderedComputeShader;
+
 	private int vaoHandle;
 
 	private int interfaceTexture;
@@ -159,8 +161,11 @@ public class GpuPlugin extends Plugin implements DrawCallbacks
 	private GpuIntBuffer vertexBuffer;
 	private GpuFloatBuffer uvBuffer;
 
+	private GpuIntBuffer modelBufferUnordered;
 	private GpuIntBuffer modelBufferSmall;
 	private GpuIntBuffer modelBuffer;
+
+	private int unorderedModels;
 
 	/**
 	 * number of models in small buffer
@@ -216,6 +221,8 @@ public class GpuPlugin extends Plugin implements DrawCallbacks
 
 				vertexBuffer = new GpuIntBuffer();
 				uvBuffer = new GpuFloatBuffer();
+
+				modelBufferUnordered = new GpuIntBuffer();
 				modelBufferSmall = new GpuIntBuffer();
 				modelBuffer = new GpuIntBuffer();
 
@@ -224,7 +231,7 @@ public class GpuPlugin extends Plugin implements DrawCallbacks
 
 				if (log.isDebugEnabled())
 				{
-					System.setProperty("jogl.debug", "true");
+//					System.setProperty("jogl.debug", "true");
 				}
 
 				GLProfile.initSingleton();
@@ -246,7 +253,7 @@ public class GpuPlugin extends Plugin implements DrawCallbacks
 				if (log.isDebugEnabled())
 				{
 					// Debug config on context needs to be set before .makeCurrent call
-					glContext.enableGLDebugMessage(true);
+//					glContext.enableGLDebugMessage(true);
 				}
 
 				int res = glContext.makeCurrent();
@@ -266,7 +273,7 @@ public class GpuPlugin extends Plugin implements DrawCallbacks
 
 				if (log.isDebugEnabled())
 				{
-					gl.glEnable(GL_DEBUG_OUTPUT);
+//					gl.glEnable(GL_DEBUG_OUTPUT);
 				}
 
 				initVao();
@@ -414,6 +421,12 @@ public class GpuPlugin extends Plugin implements DrawCallbacks
 		template = new Template(resourceLoader);
 		source = template.process(resourceLoader.apply("comp_small.glsl"));
 		GLUtil.loadComputeShader(gl, glSmallComputeProgram, glSmallComputeShader, source);
+
+		glUnorderedComputeProgram = gl.glCreateProgram();
+		glUnorrderedComputeShader = gl.glCreateShader(gl.GL_COMPUTE_SHADER);
+		template = new Template(resourceLoader);
+		source = template.process(resourceLoader.apply("comp_unordered.glsl"));
+		GLUtil.loadComputeShader(gl, glUnorderedComputeProgram, glUnorrderedComputeShader, source);
 
 		glUiProgram = gl.glCreateProgram();
 		glUiVertexShader = gl.glCreateShader(gl.GL_VERTEX_SHADER);
@@ -609,7 +622,8 @@ public class GpuPlugin extends Plugin implements DrawCallbacks
 			y -= client.getCameraY2();
 			z -= client.getCameraZ2();
 
-			GpuIntBuffer b = bufferForTriangles(2);
+			GpuIntBuffer b = modelBufferUnordered;
+			++unorderedModels;
 
 			b.ensureCapacity(8);
 			IntBuffer buffer = b.getBuffer();
@@ -638,7 +652,8 @@ public class GpuPlugin extends Plugin implements DrawCallbacks
 			y -= client.getCameraY2();
 			z -= client.getCameraZ2();
 
-			GpuIntBuffer b = bufferForTriangles(model.getBufferLen() / 3);
+			GpuIntBuffer b = modelBufferUnordered;
+			++unorderedModels;
 
 			b.ensureCapacity(8);
 			IntBuffer buffer = b.getBuffer();
@@ -693,16 +708,19 @@ public class GpuPlugin extends Plugin implements DrawCallbacks
 		uvBuffer.flip();
 		modelBuffer.flip();
 		modelBufferSmall.flip();
+		modelBufferUnordered.flip();
 
 		int bufferId = glGenBuffers(gl); // temporary scene vertex buffer
 		int uvBufferId = glGenBuffers(gl); // temporary scene uv buffer
 		int modelBufferId = glGenBuffers(gl); // scene model buffer, large
 		int modelBufferSmallId = glGenBuffers(gl); // scene model buffer, small
+		int modelBufferUnorderedId = glGenBuffers(gl);
 
 		IntBuffer vertexBuffer = this.vertexBuffer.getBuffer();
 		FloatBuffer uvBuffer = this.uvBuffer.getBuffer();
 		IntBuffer modelBuffer = this.modelBuffer.getBuffer();
 		IntBuffer modelBufferSmall = this.modelBufferSmall.getBuffer();
+		IntBuffer modelBufferUnordered = this.modelBufferUnordered.getBuffer();
 
 		gl.glBindBuffer(gl.GL_ARRAY_BUFFER, bufferId);
 		gl.glBufferData(gl.GL_ARRAY_BUFFER, vertexBuffer.limit() * Integer.BYTES, vertexBuffer, gl.GL_STREAM_DRAW);
@@ -715,6 +733,9 @@ public class GpuPlugin extends Plugin implements DrawCallbacks
 
 		gl.glBindBuffer(gl.GL_ARRAY_BUFFER, modelBufferSmallId);
 		gl.glBufferData(gl.GL_ARRAY_BUFFER, modelBufferSmall.limit() * Integer.BYTES, modelBufferSmall, gl.GL_STREAM_DRAW);
+
+		gl.glBindBuffer(gl.GL_ARRAY_BUFFER, modelBufferUnorderedId);
+		gl.glBufferData(gl.GL_ARRAY_BUFFER, modelBufferUnordered.limit() * Integer.BYTES, modelBufferUnordered, gl.GL_STREAM_DRAW);
 
 		gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0);
 
@@ -762,6 +783,19 @@ public class GpuPlugin extends Plugin implements DrawCallbacks
 			 * Compute is split into two separate programs 'small' and 'large' to
 			 * save on GPU resources. Small will sort <= 512 faces, large will do <= 4096.
 			 */
+
+			// unordered
+			gl.glUseProgram(glUnorderedComputeProgram);
+
+			gl.glBindBufferBase(gl.GL_SHADER_STORAGE_BUFFER, 0, modelBufferUnorderedId);
+			gl.glBindBufferBase(gl.GL_SHADER_STORAGE_BUFFER, 1, this.bufferId);
+			gl.glBindBufferBase(gl.GL_SHADER_STORAGE_BUFFER, 2, bufferId);
+			gl.glBindBufferBase(gl.GL_SHADER_STORAGE_BUFFER, 3, outBufferId);
+			gl.glBindBufferBase(gl.GL_SHADER_STORAGE_BUFFER, 4, outUvBufferId);
+			gl.glBindBufferBase(gl.GL_SHADER_STORAGE_BUFFER, 5, this.uvBufferId);
+			gl.glBindBufferBase(gl.GL_SHADER_STORAGE_BUFFER, 6, uvBufferId);
+
+			gl.glDispatchCompute(unorderedModels, 1, 1);
 
 			// small
 			gl.glUseProgram(glSmallComputeProgram);
@@ -859,9 +893,10 @@ public class GpuPlugin extends Plugin implements DrawCallbacks
 		uvBuffer.clear();
 		modelBuffer.clear();
 		modelBufferSmall.clear();
+		modelBufferUnordered.clear();
 
 		targetBufferOffset = 0;
-		smallModels = largeModels = 0;
+		smallModels = largeModels = unorderedModels = 0;
 		tempOffset = 0;
 		tempUvOffset = 0;
 
@@ -869,6 +904,7 @@ public class GpuPlugin extends Plugin implements DrawCallbacks
 		glDeleteBuffer(gl, uvBufferId);
 		glDeleteBuffer(gl, modelBufferId);
 		glDeleteBuffer(gl, modelBufferSmallId);
+		glDeleteBuffer(gl, modelBufferUnorderedId);
 		glDeleteBuffer(gl, outBufferId);
 		glDeleteBuffer(gl, outUvBufferId);
 

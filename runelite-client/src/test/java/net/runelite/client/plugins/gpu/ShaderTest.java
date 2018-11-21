@@ -41,7 +41,6 @@ import static net.runelite.client.plugins.gpu.GLUtil.inputStreamToString;
 import net.runelite.client.plugins.gpu.template.Template;
 import static org.junit.Assert.fail;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 public class ShaderTest
@@ -86,7 +85,34 @@ public class ShaderTest
 	}
 
 	@Test
-	@Ignore
+//	@Ignore
+	public void testUnordered() throws ShaderException
+	{
+		int glComputeProgram = gl.glCreateProgram();
+		int glComputeShader = gl.glCreateShader(gl.GL_COMPUTE_SHADER);
+		try
+		{
+			Function<String, String> func = (s) -> inputStreamToString(getClass().getResourceAsStream(s));
+			Template template = new Template(func);
+			String source = template.process(func.apply("comp_unordered.glsl"));
+
+			int line = 0;
+			for (String str : source.split("\\n"))
+			{
+				System.out.println(++line + " " + str);
+			}
+
+			GLUtil.loadComputeShader(gl, glComputeProgram, glComputeShader, source);
+		}
+		finally
+		{
+			gl.glDeleteShader(glComputeShader);
+			gl.glDeleteProgram(glComputeProgram);
+		}
+	}
+
+	@Test
+//	@Ignore
 	public void testSmall() throws ShaderException
 	{
 		int glComputeProgram = gl.glCreateProgram();
@@ -113,7 +139,7 @@ public class ShaderTest
 	}
 
 	@Test
-	@Ignore
+//	@Ignore
 	public void testComp() throws ShaderException
 	{
 		int glComputeProgram = gl.glCreateProgram();
@@ -140,7 +166,7 @@ public class ShaderTest
 	}
 
 	@Test
-	@Ignore
+//	@Ignore
 	public void testGeom() throws ShaderException
 	{
 		int glComputeProgram = gl.glCreateProgram();
