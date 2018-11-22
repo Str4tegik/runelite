@@ -24,6 +24,7 @@
  */
 package net.runelite.client.plugins.gpu;
 
+import java.util.Arrays;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import net.runelite.api.Client;
@@ -40,6 +41,7 @@ import net.runelite.api.SceneTileModel;
 import net.runelite.api.SceneTilePaint;
 import net.runelite.api.Tile;
 import net.runelite.api.WallObject;
+import static net.runelite.client.plugins.gpu.GpuPlugin.SMALL_TRIANGLE_COUNT;
 
 @Singleton
 class SceneUploader
@@ -413,6 +415,21 @@ class SceneUploader
 		return cnt;
 	}
 
+	private static int faceHeight(Model model, int face)
+	{
+		final int[] vertexY = model.getVerticesY();
+
+		final int[] trianglesX = model.getTrianglesX();
+		final int[] trianglesY = model.getTrianglesY();
+		final int[] trianglesZ = model.getTrianglesZ();
+
+		int triangleA = trianglesX[face];
+		int triangleB = trianglesY[face];
+		int triangleC = trianglesZ[face];
+
+		return (vertexY[triangleA] + vertexY[triangleB] + vertexY[triangleC]) / 3;
+	}
+
 	private void uploadModel(Model model, GpuIntBuffer vertexBuffer, GpuFloatBuffer uvBuffer)
 	{
 		if (model.getBufferOffset() > 0)
@@ -435,10 +452,34 @@ class SceneUploader
 		uvBuffer.ensureCapacity(model.getTrianglesCount() * 12);
 
 		final int triangleCount = model.getTrianglesCount();
+
 		int len = 0;
-		for (int i = 0; i < triangleCount; ++i)
+		if (triangleCount > SMALL_TRIANGLE_COUNT && model.getFaceRenderPriorities() == null)
 		{
-			len += pushFace(model, i, vertexBuffer, uvBuffer);
+			Integer[] faces = new Integer[triangleCount];
+			for (int i = 0; i < triangleCount; ++i)
+			{
+				faces[i] = i;
+			}
+
+			Arrays.sort(faces, (i1, i2) ->
+			{
+				int z1 = faceHeight(model, i1);
+				int z2 = faceHeight(model, i2);
+				return Integer.compare(z2, z1);
+			});
+
+			for (int i = 0; i < triangleCount; ++i)
+			{
+				len += pushFace(model, faces[i], vertexBuffer, uvBuffer);
+			}
+		}
+		else
+		{
+			for (int i = 0; i < triangleCount; ++i)
+			{
+				len += pushFace(model, i, vertexBuffer, uvBuffer);
+			}
 		}
 
 		offset += len;

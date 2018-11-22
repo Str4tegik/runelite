@@ -97,7 +97,7 @@ public class GpuPlugin extends Plugin implements DrawCallbacks
 {
 	// This is the maximum number of triangles the compute shaders support
 	private static final int MAX_TRIANGLE = 4096;
-	private static final int SMALL_TRIANGLE_COUNT = 512;
+	static final int SMALL_TRIANGLE_COUNT = 512;
 	private static final int FLAG_SCENE_BUFFER = Integer.MIN_VALUE;
 	private static final int MAX_DISTANCE = 90;
 
@@ -1251,6 +1251,35 @@ public class GpuPlugin extends Plugin implements DrawCallbacks
 
 			int tc = Math.min(MAX_TRIANGLE, model.getTrianglesCount());
 			int uvOffset = model.getUvBufferOffset();
+			boolean hasUv = model.getFaceTextures() != null;
+
+			// Speed hack: the scene uploader splits up large models with no priorities
+			// based on face height, and then we sort each smaller set of faces
+			if (tc > SMALL_TRIANGLE_COUNT && model.getFaceRenderPriorities() == null)
+			{
+				int left = tc;
+				int off = 0;
+				while (left > 0)
+				{
+					tc = Math.min(SMALL_TRIANGLE_COUNT, left);
+
+					GpuIntBuffer b = bufferForTriangles(tc);
+					b.ensureCapacity(8);
+					IntBuffer buffer = b.getBuffer();
+					buffer.put(model.getBufferOffset() + off);
+					buffer.put(hasUv ? uvOffset + off : -1);
+					buffer.put(tc);
+					buffer.put(targetBufferOffset);
+					buffer.put(FLAG_SCENE_BUFFER | (model.getRadius() << 12) | orientation);
+					buffer.put(x + client.getCameraX2()).put(y + client.getCameraY2()).put(z + client.getCameraZ2());
+
+					targetBufferOffset += tc * 3;
+
+					off += tc * 3;
+					left -= tc;
+				}
+				return;
+			}
 
 			GpuIntBuffer b = bufferForTriangles(tc);
 
@@ -1325,7 +1354,7 @@ public class GpuPlugin extends Plugin implements DrawCallbacks
 	 */
 	private GpuIntBuffer bufferForTriangles(int triangles)
 	{
-		if (triangles < SMALL_TRIANGLE_COUNT)
+		if (triangles <= SMALL_TRIANGLE_COUNT)
 		{
 			++smallModels;
 			return modelBufferSmall;
