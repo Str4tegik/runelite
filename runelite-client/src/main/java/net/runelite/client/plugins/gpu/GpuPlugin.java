@@ -1255,7 +1255,7 @@ public class GpuPlugin extends Plugin implements DrawCallbacks
 
 			// Speed hack: the scene uploader splits up large models with no priorities
 			// based on face height, and then we sort each smaller set of faces
-			if (tc > SMALL_TRIANGLE_COUNT && model.getFaceRenderPriorities() == null)
+			if (tc > SMALL_TRIANGLE_COUNT && model.getFaceRenderPriorities() == null && config.split())
 			{
 				int left = tc;
 				int off = 0;

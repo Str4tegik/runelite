@@ -40,4 +40,14 @@ public interface GpuPluginConfig extends Config
 	{
 		return 25;
 	}
+
+	@ConfigItem(
+		keyName = "split",
+		name = "split",
+		description = "split"
+	)
+	default boolean split()
+	{
+		return true;
+	}
 }
