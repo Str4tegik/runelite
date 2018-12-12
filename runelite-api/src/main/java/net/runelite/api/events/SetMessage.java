@@ -36,4 +36,5 @@ public class SetMessage
 	 * The new message value.
 	 */
 	private String value;
+	private int timestamp;
 }

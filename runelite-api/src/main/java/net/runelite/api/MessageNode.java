@@ -29,6 +29,8 @@ package net.runelite.api;
  */
 public interface MessageNode
 {
+	int getId();
+
 	/**
 	 * Gets the type of message.
 	 *
@@ -95,4 +97,7 @@ public interface MessageNode
 	 * @param runeLiteFormatMessage the new message format
 	 */
 	void setRuneLiteFormatMessage(String runeLiteFormatMessage);
+
+	int getTimestamp();
+	void setTimestamp(int timestamp);
 }
