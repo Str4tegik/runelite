@@ -89,13 +89,6 @@ public abstract class RSMessageNodeMixin implements RSMessageNode
 	}
 
 	@Inject
-	@Override
-	public void setTimestamp(int timestamp)
-	{
-		this.rl$timestamp = timestamp;
-	}
-
-	@Inject
 	@MethodHook(value = "setMessage", end = true)
 	public void setMessage(int type, String name, String sender, String value)
 	{

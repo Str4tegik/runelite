@@ -99,5 +99,4 @@ public interface MessageNode
 	void setRuneLiteFormatMessage(String runeLiteFormatMessage);
 
 	int getTimestamp();
-	void setTimestamp(int timestamp);
 }
