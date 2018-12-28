@@ -110,4 +110,41 @@ public class LootTrackerClient
 			throw new IOException(ex);
 		}
 	}
+
+	public void delete(LootRecordType type, String eventId)
+	{
+		HttpUrl.Builder builder = RuneLiteAPI.getApiBase().newBuilder()
+			.addPathSegment("loottracker");
+
+		if (type != null)
+		{
+			builder.addQueryParameter("type", type.name());
+		}
+		if (eventId != null)
+		{
+			builder.addQueryParameter("eventId", eventId);
+		}
+
+		Request request = new Request.Builder()
+			.header(RuneLiteAPI.RUNELITE_AUTH, uuid.toString())
+			.delete()
+			.url(builder.build())
+			.build();
+
+		RuneLiteAPI.CLIENT.newCall(request).enqueue(new Callback()
+		{
+			@Override
+			public void onFailure(Call call, IOException e)
+			{
+				log.warn("unable to delete loot", e);
+			}
+
+			@Override
+			public void onResponse(Call call, Response response)
+			{
+				log.debug("Deleted loot");
+				response.close();
+			}
+		});
+	}
 }
