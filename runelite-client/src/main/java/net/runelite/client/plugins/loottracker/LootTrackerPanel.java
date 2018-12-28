@@ -479,7 +479,8 @@ class LootTrackerPanel extends PluginPanel
 			logsContainer.repaint();
 
 			LootTrackerClient client = plugin.getLootTrackerClient();
-			if (client != null)
+			// Without loot being grouped we have no way to identify single kills to be deleted
+			if (client != null && groupLoot)
 			{
 				client.delete(box.getId());
 			}

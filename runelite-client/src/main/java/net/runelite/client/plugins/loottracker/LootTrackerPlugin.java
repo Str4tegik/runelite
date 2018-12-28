@@ -235,6 +235,12 @@ public class LootTrackerPlugin extends Plugin
 				{
 					Collection<LootRecord> lootRecords;
 
+					if (!config.saveLoot())
+					{
+						// don't load loot if we're not saving loot
+						return;
+					}
+
 					try
 					{
 						lootRecords = lootTrackerClient.get();
@@ -275,7 +281,7 @@ public class LootTrackerPlugin extends Plugin
 		final LootTrackerItem[] entries = buildEntries(stack(items));
 		SwingUtilities.invokeLater(() -> panel.add(name, combat, entries));
 
-		if (lootTrackerClient != null)
+		if (lootTrackerClient != null && config.saveLoot())
 		{
 			LootRecord lootRecord = new LootRecord(name, LootRecordType.NPC, toGameItems(items));
 			lootTrackerClient.submit(lootRecord);
@@ -292,7 +298,7 @@ public class LootTrackerPlugin extends Plugin
 		final LootTrackerItem[] entries = buildEntries(stack(items));
 		SwingUtilities.invokeLater(() -> panel.add(name, combat, entries));
 
-		if (lootTrackerClient != null)
+		if (lootTrackerClient != null && config.saveLoot())
 		{
 			LootRecord lootRecord = new LootRecord(name, LootRecordType.PLAYER, toGameItems(items));
 			lootTrackerClient.submit(lootRecord);
@@ -351,7 +357,7 @@ public class LootTrackerPlugin extends Plugin
 		final LootTrackerItem[] entries = buildEntries(stack(items));
 		SwingUtilities.invokeLater(() -> panel.add(eventType, -1, entries));
 
-		if (lootTrackerClient != null)
+		if (lootTrackerClient != null && config.saveLoot())
 		{
 			LootRecord lootRecord = new LootRecord(eventType, LootRecordType.EVENT, toGameItems(items));
 			lootTrackerClient.submit(lootRecord);
