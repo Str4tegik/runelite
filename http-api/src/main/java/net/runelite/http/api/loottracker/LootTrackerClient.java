@@ -111,15 +111,11 @@ public class LootTrackerClient
 		}
 	}
 
-	public void delete(LootRecordType type, String eventId)
+	public void delete(String eventId)
 	{
 		HttpUrl.Builder builder = RuneLiteAPI.getApiBase().newBuilder()
 			.addPathSegment("loottracker");
 
-		if (type != null)
-		{
-			builder.addQueryParameter("type", type.name());
-		}
 		if (eventId != null)
 		{
 			builder.addQueryParameter("eventId", eventId);

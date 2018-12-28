@@ -51,6 +51,7 @@ import net.runelite.client.ui.components.PluginErrorPanel;
 import net.runelite.client.util.ColorUtil;
 import net.runelite.client.util.ImageUtil;
 import net.runelite.client.util.StackFormatter;
+import net.runelite.http.api.loottracker.LootTrackerClient;
 
 class LootTrackerPanel extends PluginPanel
 {
@@ -293,6 +294,13 @@ class LootTrackerPanel extends PluginPanel
 			updateOverall();
 			logsContainer.removeAll();
 			logsContainer.repaint();
+
+			// Delete all loot, or loot matching the current view
+			LootTrackerClient client = plugin.getLootTrackerClient();
+			if (client != null)
+			{
+				client.delete(currentView);
+			}
 		});
 
 		// Create popup menu
@@ -469,6 +477,12 @@ class LootTrackerPanel extends PluginPanel
 			updateOverall();
 			logsContainer.remove(box);
 			logsContainer.repaint();
+
+			LootTrackerClient client = plugin.getLootTrackerClient();
+			if (client != null)
+			{
+				client.delete(box.getId());
+			}
 		});
 
 		popupMenu.add(reset);
