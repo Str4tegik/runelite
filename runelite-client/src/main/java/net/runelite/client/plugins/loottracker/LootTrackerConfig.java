@@ -33,21 +33,10 @@ import net.runelite.client.config.ConfigItem;
 public interface LootTrackerConfig extends Config
 {
 	@ConfigItem(
-		keyName = "loadDataInClient",
-		name = "Load data on client load",
-		description = "Configures whether persistent loot tracker data should load inside the client on load.<br/> Must be Logged in.",
-		position = 0
-	)
-	default boolean loadDataInClient()
-	{
-		return true;
-	}
-
-	@ConfigItem(
 		keyName = "ignoredItems",
 		name = "Ignored items",
 		description = "Configures which items should be ignored when calculating loot prices.",
-		position = 1
+		position = 0
 	)
 	default String getIgnoredItems()
 	{
@@ -58,7 +47,7 @@ public interface LootTrackerConfig extends Config
 		keyName = "ignoredItems",
 		name = "",
 		description = "",
-		position = 2
+		position = 1
 	)
 	void setIgnoredItems(String key);
 }

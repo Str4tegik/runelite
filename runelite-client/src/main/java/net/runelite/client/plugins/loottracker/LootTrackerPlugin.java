@@ -29,6 +29,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.inject.Provides;
 import java.awt.image.BufferedImage;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -218,32 +219,39 @@ public class LootTrackerPlugin extends Plugin
 		{
 			lootTrackerClient = new LootTrackerClient(accountSession.getUuid());
 
-
-			// Load all persistent data on client load if enabled
-			if (config.loadDataInClient())
+			clientThread.invokeLater(() ->
 			{
-				clientThread.invokeLater(() ->
+				switch (client.getGameState())
 				{
-					switch (client.getGameState())
+					case STARTING:
+					case UNKNOWN:
+						return false;
+				}
+
+				executor.submit(() ->
+				{
+					Collection<LootRecord> lootRecords;
+
+					try
 					{
-						case STARTING:
-						case UNKNOWN:
-							return false;
+						lootRecords = lootTrackerClient.get();
+					}
+					catch (IOException e)
+					{
+						log.debug("Unable to look up loot", e);
+						return;
 					}
 
-					executor.submit(() ->
+					log.debug("Loaded {} data entries", lootRecords.size());
+
+					clientThread.invokeLater(() ->
 					{
-						Collection<LootRecord> persisted = lootTrackerClient.get();
-						log.debug("Loaded {} data entries", persisted.size());
-						clientThread.invokeLater(() ->
-						{
-							Collection<LootTrackerRecord> records = convertToLootTrackerRecord(persisted);
-							SwingUtilities.invokeLater(() -> panel.addRecords(records));
-						});
+						Collection<LootTrackerRecord> records = convertToLootTrackerRecord(lootRecords);
+						SwingUtilities.invokeLater(() -> panel.addRecords(records));
 					});
-					return true;
 				});
-			}
+				return true;
+			});
 		}
 	}
 
@@ -403,22 +411,26 @@ public class LootTrackerPlugin extends Plugin
 		return ignoredItems.contains(name);
 	}
 
+	private LootTrackerItem buildLootTrackerItem(int itemId, int quantity)
+	{
+		final ItemComposition itemComposition = itemManager.getItemComposition(itemId);
+		final int realItemId = itemComposition.getNote() != -1 ? itemComposition.getLinkedNoteId() : itemId;
+		final long price = (long) itemManager.getItemPrice(realItemId) * (long) quantity;
+		final boolean ignored = ignoredItems.contains(itemComposition.getName());
+
+		return new LootTrackerItem(
+			itemId,
+			itemComposition.getName(),
+			quantity,
+			price,
+			ignored);
+	}
+
 	private LootTrackerItem[] buildEntries(final Collection<ItemStack> itemStacks)
 	{
-		return itemStacks.stream().map(itemStack ->
-		{
-			final ItemComposition itemComposition = itemManager.getItemComposition(itemStack.getId());
-			final int realItemId = itemComposition.getNote() != -1 ? itemComposition.getLinkedNoteId() : itemStack.getId();
-			final long price = (long) itemManager.getItemPrice(realItemId) * (long) itemStack.getQuantity();
-			final boolean ignored = ignoredItems.contains(itemComposition.getName());
-
-			return new LootTrackerItem(
-				itemStack.getId(),
-				itemComposition.getName(),
-				itemStack.getQuantity(),
-				price,
-				ignored);
-		}).toArray(LootTrackerItem[]::new);
+		return itemStacks.stream()
+			.map(itemStack -> buildLootTrackerItem(itemStack.getId(), itemStack.getQuantity()))
+			.toArray(LootTrackerItem[]::new);
 	}
 
 	private static Collection<GameItem> toGameItems(Collection<ItemStack> items)
@@ -433,21 +445,9 @@ public class LootTrackerPlugin extends Plugin
 		Collection<LootTrackerRecord> trackerRecords = new ArrayList<>();
 		for (LootRecord record : records)
 		{
-			// Convert GameItem drops into LootTrackerItems
 			LootTrackerItem[] drops = record.getDrops().stream().map(itemStack ->
-			{
-				final ItemComposition itemComposition = itemManager.getItemComposition(itemStack.getId());
-				final int realItemId = itemComposition.getNote() != -1 ? itemComposition.getLinkedNoteId() : itemStack.getId();
-				final long price = (long) itemManager.getItemPrice(realItemId) * (long) itemStack.getQty();
-				final boolean ignored = ignoredItems.contains(itemComposition.getName());
-
-				return new LootTrackerItem(
-					itemStack.getId(),
-					itemComposition.getName(),
-					itemStack.getQty(),
-					price,
-					ignored);
-			}).toArray(LootTrackerItem[]::new);
+				buildLootTrackerItem(itemStack.getId(), itemStack.getQty())
+			).toArray(LootTrackerItem[]::new);
 
 			trackerRecords.add(new LootTrackerRecord(record.getEventId(), "", drops, -1));
 		}
