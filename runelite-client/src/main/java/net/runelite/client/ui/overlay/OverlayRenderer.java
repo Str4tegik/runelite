@@ -54,7 +54,6 @@ import net.runelite.client.input.MouseAdapter;
 import net.runelite.client.input.MouseManager;
 import net.runelite.client.ui.JagexColors;
 import net.runelite.client.util.ColorUtil;
-import org.apache.commons.lang3.ArrayUtils;
 
 @Singleton
 public class OverlayRenderer extends MouseAdapter implements KeyListener
@@ -123,7 +122,15 @@ public class OverlayRenderer extends MouseAdapter implements KeyListener
 			return;
 		}
 
-		client.setMenuEntries(ArrayUtils.addAll(menuEntries, client.getMenuEntries()));
+		MenuEntry[] clientMenuEntries = client.getMenuEntries();
+		MenuEntry[] newEntries = new MenuEntry[clientMenuEntries.length + menuEntries.length];
+
+		newEntries[0] = clientMenuEntries[0];
+		System.arraycopy(menuEntries, 0, newEntries, 1, menuEntries.length);
+		System.arraycopy(clientMenuEntries, 1, newEntries, menuEntries.length + 1, clientMenuEntries.length - 1);
+		client.setMenuEntries(newEntries);
+
+//		client.setMenuEntries(ArrayUtils.addAll(this.menuEntries, client.getMenuEntries()));
 	}
 
 	@Subscribe
@@ -563,7 +570,7 @@ public class OverlayRenderer extends MouseAdapter implements KeyListener
 			entry.setTarget(ColorUtil.wrapWithColorTag(overlayMenuEntry.getTarget(), JagexColors.MENU_TARGET));
 			entry.setType(MenuAction.RUNELITE_OVERLAY.getId());
 			entry.setIdentifier(overlay.id); // overlay
-			entry.setParam0(i); // menu entry
+//			entry.setParam0(i); // menu entry
 
 			entries[i] = entry;
 		}
