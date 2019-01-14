@@ -30,7 +30,6 @@ import java.awt.Graphics2D;
 import javax.inject.Inject;
 import net.runelite.api.Client;
 import net.runelite.api.Skill;
-import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.plugins.xptracker.XpTrackerService;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayPosition;
@@ -49,12 +48,13 @@ class WoodcuttingOverlay extends Overlay
 	@Inject
 	private WoodcuttingOverlay(Client client, WoodcuttingPlugin plugin, WoodcuttingConfig config, XpTrackerService xpTrackerService)
 	{
+		super(plugin);
 		setPosition(OverlayPosition.TOP_LEFT);
 		this.client = client;
 		this.plugin = plugin;
 		this.config = config;
 		this.xpTrackerService = xpTrackerService;
-		addConfigurationMenu("Configure", "Woodcutting overlay", WoodcuttingPlugin.class.getAnnotation(PluginDescriptor.class).name());
+//		addConfigurationMenu("Configure", "Woodcutting overlay", WoodcuttingPlugin.class.getAnnotation(PluginDescriptor.class).name());
 	}
 
 	@Override

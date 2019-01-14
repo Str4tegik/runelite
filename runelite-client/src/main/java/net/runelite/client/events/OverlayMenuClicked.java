@@ -2,6 +2,7 @@ package net.runelite.client.events;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayMenuEntry;
 
 @Data
@@ -9,4 +10,5 @@ import net.runelite.client.ui.overlay.OverlayMenuEntry;
 public class OverlayMenuClicked
 {
 	OverlayMenuEntry entry;
+	Overlay overlay;
 }

@@ -11,7 +11,7 @@ public class OverlayMenuEntry
 	private String target;
 	private int identifier = -1;
 
-	private String configGroup;
+//	private String configGroup;
 //	private Config config;
 //	private int param0;
 //	private int param1;

@@ -98,6 +98,8 @@ public class WoodcuttingPlugin extends Plugin
 	{
 		overlayManager.add(overlay);
 		overlayManager.add(treesOverlay);
+
+		overlayManager.addConfigurationMenu(this, overlay, "Configure", "Woodcutting overlay");
 	}
 
 	@Override

@@ -48,6 +48,9 @@ import net.runelite.client.eventbus.EventBus;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.OverlayMenuClicked;
 import net.runelite.client.events.PluginChanged;
+import net.runelite.client.plugins.Plugin;
+import net.runelite.client.plugins.PluginDescriptor;
+import net.runelite.client.plugins.PluginManager;
 
 /**
  * Manages state of all game overlays
@@ -98,12 +101,14 @@ public class OverlayManager
 	private final Map<OverlayLayer, List<Overlay>> overlayLayers = new EnumMap<>(OverlayLayer.class);
 
 	private final ConfigManager configManager;
+	private final PluginManager pluginManager;
 	private final EventBus eventBus;
 
 	@Inject
-	private OverlayManager(final ConfigManager configManager, final EventBus eventBus)
+	private OverlayManager(final ConfigManager configManager, final PluginManager pluginManager, final EventBus eventBus)
 	{
 		this.configManager = configManager;
+		this.pluginManager = pluginManager;
 		this.eventBus = eventBus;
 	}
 
@@ -132,13 +137,28 @@ public class OverlayManager
 			List<OverlayMenuEntry> menuEntries = overlay.getMenuEntries();
 			Optional<OverlayMenuEntry> optionalOverlayMenuEntry = menuEntries.stream().filter(me -> me.getOption().equals(event.getMenuOption())).findFirst();
 			if (optionalOverlayMenuEntry.isPresent()) {
-				eventBus.post(new OverlayMenuClicked(optionalOverlayMenuEntry.get()));
+				eventBus.post(new OverlayMenuClicked(optionalOverlayMenuEntry.get(), overlay));
 			}
 		}
 	}
 
 	public int overlayId(Overlay overlay) {
 		return overlays.indexOf(overlay);
+	}
+
+	public void addConfigurationMenu(Plugin plugin, Overlay overlay, String option, String target) {
+		final PluginDescriptor descriptor = plugin.getClass().getAnnotation(PluginDescriptor.class);
+//		final Config config = pluginManager.getPluginConfigProxy(plugin);
+//		final ConfigDescriptor configDescriptor = config == null ? null : configManager.getConfigDescriptor(config);
+
+		OverlayMenuEntry overlayMenuEntry = new OverlayMenuEntry();
+		overlayMenuEntry.setOption(option);
+		overlayMenuEntry.setTarget(target);
+		overlayMenuEntry.setIdentifier(OverlayMenuEntry.MENU_ID_CONFIG);
+//		overlayMenuEntry.setConfigGroup(descriptor.name());
+		overlay.menuEntries.add(overlayMenuEntry);
+//		menuEntries.add(overlayMenuEntry);
+//		addMenuEntry(option, target, 1, );
 	}
 
 	/**

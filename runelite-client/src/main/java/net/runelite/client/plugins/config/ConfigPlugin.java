@@ -40,6 +40,7 @@ import net.runelite.client.plugins.PluginManager;
 import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.ClientUI;
 import net.runelite.client.ui.NavigationButton;
+import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayMenuEntry;
 import net.runelite.client.util.ImageUtil;
 
@@ -107,10 +108,14 @@ public class ConfigPlugin extends Plugin
 	public void onOverlayMenuClicked(OverlayMenuClicked overlayMenuClicked) {
 		OverlayMenuEntry overlayMenuEntry = overlayMenuClicked.getEntry();
 		if( overlayMenuEntry.getIdentifier() == OverlayMenuEntry.MENU_ID_CONFIG) {
+			Overlay overlay = overlayMenuClicked.getOverlay();
+			Plugin plugin = overlay.getPlugin();
+			if (plugin == null) return;
+			PluginDescriptor descriptor = plugin.getClass().getAnnotation(PluginDescriptor.class);
 			SwingUtilities.invokeLater(() ->
 			{
 				clientUI.expand(navButton);
-				configPanel.openConfigurationPanel(overlayMenuEntry.getConfigGroup());
+				configPanel.openConfigurationPanel(descriptor.name());
 			});
 		}
 	}
