@@ -555,7 +555,7 @@ public class OverlayRenderer extends MouseAdapter implements KeyListener
 			new Rectangle(canvasTopRightPoint, SNAP_CORNER_SIZE));
 	}
 
-	private static MenuEntry[] createRightClickMenuEntries(Overlay overlay)
+	private MenuEntry[] createRightClickMenuEntries(Overlay overlay)
 	{
 		List<OverlayMenuEntry> menuEntries = overlay.getMenuEntries();
 		final MenuEntry[] entries = new MenuEntry[menuEntries.size()];
@@ -569,7 +569,7 @@ public class OverlayRenderer extends MouseAdapter implements KeyListener
 			entry.setOption(overlayMenuEntry.getOption());
 			entry.setTarget(ColorUtil.wrapWithColorTag(overlayMenuEntry.getTarget(), JagexColors.MENU_TARGET));
 			entry.setType(MenuAction.RUNELITE_OVERLAY.getId());
-			entry.setIdentifier(overlay.id); // overlay
+			entry.setIdentifier(overlayManager.overlayId(overlay)); // overlay
 //			entry.setParam0(i); // menu entry
 
 			entries[i] = entry;

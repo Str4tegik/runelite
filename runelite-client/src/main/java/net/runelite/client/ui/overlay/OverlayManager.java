@@ -100,8 +100,6 @@ public class OverlayManager
 	private final ConfigManager configManager;
 	private final EventBus eventBus;
 
-	private int curOverlayId = 1;
-
 	@Inject
 	private OverlayManager(final ConfigManager configManager, final EventBus eventBus)
 	{
@@ -128,38 +126,19 @@ public class OverlayManager
 		System.out.println(event);
 		event.consume();
 
-		Optional<Overlay> optionalOverlay = overlays.stream().filter(o -> o.id == event.getId()).findFirst();
+		Optional<Overlay> optionalOverlay = overlays.stream().filter(o -> overlayId(o) == event.getId()).findFirst();
 		if (optionalOverlay.isPresent()) {
 			Overlay overlay = optionalOverlay.get();
-//			int menuIdx = event.
 			List<OverlayMenuEntry> menuEntries = overlay.getMenuEntries();
 			Optional<OverlayMenuEntry> optionalOverlayMenuEntry = menuEntries.stream().filter(me -> me.getOption().equals(event.getMenuOption())).findFirst();
 			if (optionalOverlayMenuEntry.isPresent()) {
 				eventBus.post(new OverlayMenuClicked(optionalOverlayMenuEntry.get()));
-//				System.out.println("CLICKED " + optionalOverlayMenuEntry.get());
 			}
 		}
-//		final String overlayName = Text.removeTags(event.getMenuTarget());
-//		Overlay overlay = null;
-//		for (Overlay o : overlays)
-//		{
-//			if (o.getName().equals(overlayName))
-//			{
-//				overlay = o;
-//				break;
-//			}
-//		}
-//
-//		if (overlay == null)
-//		{
-//			return;
-//		}
-//
-//		final Runnable r = overlay.getMenuOptions().get(event.getMenuOption());
-//		if (r != null)
-//		{
-//			r.run();
-//		}
+	}
+
+	public int overlayId(Overlay overlay) {
+		return overlays.indexOf(overlay);
 	}
 
 	/**
@@ -187,7 +166,6 @@ public class OverlayManager
 		}
 
 		// Add is always true
-		overlay.id = curOverlayId++;
 		overlays.add(overlay);
 		loadOverlay(overlay);
 		rebuildOverlayLayers();

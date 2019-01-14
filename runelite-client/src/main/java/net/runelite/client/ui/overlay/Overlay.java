@@ -37,7 +37,6 @@ import net.runelite.client.ui.overlay.components.LayoutableRenderableEntity;
 @Setter
 public abstract class Overlay implements LayoutableRenderableEntity
 {
-	int id;
 	private Point preferredLocation;
 	private Dimension preferredSize;
 	private OverlayPosition preferredPosition;
