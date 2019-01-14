@@ -48,8 +48,6 @@ import net.runelite.client.eventbus.EventBus;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.OverlayMenuClicked;
 import net.runelite.client.events.PluginChanged;
-import net.runelite.client.plugins.Plugin;
-import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.plugins.PluginManager;
 
 /**
@@ -122,7 +120,7 @@ public class OverlayManager
 	@Subscribe
 	public void onMenuOptionClicked(MenuOptionClicked event)
 	{
-		if (event.getMenuAction() != MenuAction.RUNELITE_OVERLAY)
+		if (event.getMenuAction() != MenuAction.RUNELITE_OVERLAY && event.getMenuAction() != MenuAction.RUNELITE_OVERLAY_CONFIG)
 		{
 			return;
 		}
@@ -146,19 +144,34 @@ public class OverlayManager
 		return overlays.indexOf(overlay);
 	}
 
-	public void addConfigurationMenu(Plugin plugin, Overlay overlay, String option, String target) {
-		final PluginDescriptor descriptor = plugin.getClass().getAnnotation(PluginDescriptor.class);
+	public void addMenu(Overlay overlay, MenuAction menuAction, String option, String target) {
+//		Plugin plugin = overlay.getPlugin();
+//		if (plugin == null) {
+//			throw new IllegalArgumentException("Overlay must have a plugin");
+//		}
+//		final PluginDescriptor descriptor = plugin.getClass().getAnnotation(PluginDescriptor.class);
 //		final Config config = pluginManager.getPluginConfigProxy(plugin);
 //		final ConfigDescriptor configDescriptor = config == null ? null : configManager.getConfigDescriptor(config);
 
 		OverlayMenuEntry overlayMenuEntry = new OverlayMenuEntry();
+		overlayMenuEntry.setMenuAction(menuAction);
 		overlayMenuEntry.setOption(option);
 		overlayMenuEntry.setTarget(target);
-		overlayMenuEntry.setIdentifier(OverlayMenuEntry.MENU_ID_CONFIG);
+//		overlayMenuEntry.setIdentifier(OverlayMenuEntry.MENU_ID_CONFIG);
 //		overlayMenuEntry.setConfigGroup(descriptor.name());
 		overlay.menuEntries.add(overlayMenuEntry);
 //		menuEntries.add(overlayMenuEntry);
 //		addMenuEntry(option, target, 1, );
+	}
+
+	public void removeMenu(Overlay overlay, String option)
+	{
+		for (OverlayMenuEntry overlayMenuEntry : overlay.menuEntries) {
+			if (overlayMenuEntry.getOption().equals(option)) {
+				overlay.menuEntries.remove(overlayMenuEntry);
+				break;
+			}
+		}
 	}
 
 	/**
