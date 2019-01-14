@@ -705,7 +705,7 @@ public class ClientUI
 		}
 	}
 
-	private void expand(@Nullable NavigationButton button)
+	public void expand(@Nullable NavigationButton button)
 	{
 		if (button == null)
 		{

@@ -32,12 +32,15 @@ import net.runelite.client.config.ChatColorConfig;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.config.RuneLiteConfig;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.events.OverlayMenuClicked;
 import net.runelite.client.events.PluginChanged;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.plugins.PluginManager;
 import net.runelite.client.ui.ClientToolbar;
+import net.runelite.client.ui.ClientUI;
 import net.runelite.client.ui.NavigationButton;
+import net.runelite.client.ui.overlay.OverlayMenuEntry;
 import net.runelite.client.util.ImageUtil;
 
 @PluginDescriptor(
@@ -47,6 +50,9 @@ import net.runelite.client.util.ImageUtil;
 )
 public class ConfigPlugin extends Plugin
 {
+	@Inject
+	private ClientUI clientUI;
+
 	@Inject
 	private ClientToolbar clientToolbar;
 
@@ -95,5 +101,17 @@ public class ConfigPlugin extends Plugin
 	public void onPluginChanged(PluginChanged event)
 	{
 		SwingUtilities.invokeLater(configPanel::refreshPluginList);
+	}
+
+	@Subscribe
+	public void onOverlayMenuClicked(OverlayMenuClicked overlayMenuClicked) {
+		OverlayMenuEntry overlayMenuEntry = overlayMenuClicked.getEntry();
+		if( overlayMenuEntry.getIdentifier() == OverlayMenuEntry.MENU_ID_CONFIG) {
+			SwingUtilities.invokeLater(() ->
+			{
+				clientUI.expand(navButton);
+				configPanel.openConfigurationPanel(overlayMenuEntry.getConfigGroup());
+			});
+		}
 	}
 }

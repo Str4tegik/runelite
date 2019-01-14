@@ -33,6 +33,7 @@ import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Predicate;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -43,9 +44,10 @@ import net.runelite.api.events.MenuOptionClicked;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.config.RuneLiteConfig;
+import net.runelite.client.eventbus.EventBus;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.events.OverlayMenuClicked;
 import net.runelite.client.events.PluginChanged;
-import net.runelite.client.util.Text;
 
 /**
  * Manages state of all game overlays
@@ -96,11 +98,15 @@ public class OverlayManager
 	private final Map<OverlayLayer, List<Overlay>> overlayLayers = new EnumMap<>(OverlayLayer.class);
 
 	private final ConfigManager configManager;
+	private final EventBus eventBus;
+
+	private int curOverlayId = 1;
 
 	@Inject
-	private OverlayManager(final ConfigManager configManager)
+	private OverlayManager(final ConfigManager configManager, final EventBus eventBus)
 	{
 		this.configManager = configManager;
+		this.eventBus = eventBus;
 	}
 
 	@Subscribe
@@ -113,34 +119,47 @@ public class OverlayManager
 	@Subscribe
 	public void onMenuOptionClicked(MenuOptionClicked event)
 	{
-		if (!MenuAction.RUNELITE_OVERLAY.equals(event.getMenuAction()))
+		if (event.getMenuAction() != MenuAction.RUNELITE_OVERLAY)
 		{
 			return;
 		}
 
+		//MenuOptionClicked(actionParam=0, menuOption=Configure, menuTarget=<col=ff9040>Woodcutting overlay</col>, menuAction=RUNELITE_OVERLAY, id=39, widgetId=0, consumed=false)
+		System.out.println(event);
 		event.consume();
 
-		final String overlayName = Text.removeTags(event.getMenuTarget());
-		Overlay overlay = null;
-		for (Overlay o : overlays)
-		{
-			if (o.getName().equals(overlayName))
-			{
-				overlay = o;
-				break;
+		Optional<Overlay> optionalOverlay = overlays.stream().filter(o -> o.id == event.getId()).findFirst();
+		if (optionalOverlay.isPresent()) {
+			Overlay overlay = optionalOverlay.get();
+//			int menuIdx = event.
+			List<OverlayMenuEntry> menuEntries = overlay.getMenuEntries();
+			Optional<OverlayMenuEntry> optionalOverlayMenuEntry = menuEntries.stream().filter(me -> me.getOption().equals(event.getMenuOption())).findFirst();
+			if (optionalOverlayMenuEntry.isPresent()) {
+				eventBus.post(new OverlayMenuClicked(optionalOverlayMenuEntry.get()));
+//				System.out.println("CLICKED " + optionalOverlayMenuEntry.get());
 			}
 		}
-
-		if (overlay == null)
-		{
-			return;
-		}
-
-		final Runnable r = overlay.getMenuOptions().get(event.getMenuOption());
-		if (r != null)
-		{
-			r.run();
-		}
+//		final String overlayName = Text.removeTags(event.getMenuTarget());
+//		Overlay overlay = null;
+//		for (Overlay o : overlays)
+//		{
+//			if (o.getName().equals(overlayName))
+//			{
+//				overlay = o;
+//				break;
+//			}
+//		}
+//
+//		if (overlay == null)
+//		{
+//			return;
+//		}
+//
+//		final Runnable r = overlay.getMenuOptions().get(event.getMenuOption());
+//		if (r != null)
+//		{
+//			r.run();
+//		}
 	}
 
 	/**
@@ -168,6 +187,7 @@ public class OverlayManager
 		}
 
 		// Add is always true
+		overlay.id = curOverlayId++;
 		overlays.add(overlay);
 		loadOverlay(overlay);
 		rebuildOverlayLayers();

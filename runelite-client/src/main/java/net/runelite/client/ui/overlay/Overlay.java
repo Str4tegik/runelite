@@ -27,7 +27,8 @@ package net.runelite.client.ui.overlay;
 import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.util.LinkedHashMap;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 import net.runelite.client.ui.overlay.components.LayoutableRenderableEntity;
@@ -36,6 +37,7 @@ import net.runelite.client.ui.overlay.components.LayoutableRenderableEntity;
 @Setter
 public abstract class Overlay implements LayoutableRenderableEntity
 {
+	int id;
 	private Point preferredLocation;
 	private Dimension preferredSize;
 	private OverlayPosition preferredPosition;
@@ -43,7 +45,7 @@ public abstract class Overlay implements LayoutableRenderableEntity
 	private OverlayPosition position = OverlayPosition.TOP_LEFT;
 	private OverlayPriority priority = OverlayPriority.NONE;
 	private OverlayLayer layer = OverlayLayer.UNDER_WIDGETS;
-	private final LinkedHashMap<String, Runnable> menuOptions = new LinkedHashMap<>();
+	private final List<OverlayMenuEntry> menuEntries = new ArrayList<>();
 
 	/**
 	 * Overlay name, used for saving the overlay, needs to be unique
@@ -52,5 +54,19 @@ public abstract class Overlay implements LayoutableRenderableEntity
 	public String getName()
 	{
 		return this.getClass().getSimpleName();
+	}
+
+	public void addConfigurationMenu(String option, String target, String configGroup) {
+		OverlayMenuEntry overlayMenuEntry = new OverlayMenuEntry();
+		overlayMenuEntry.setOption(option);
+		overlayMenuEntry.setTarget(target);
+		overlayMenuEntry.setIdentifier(OverlayMenuEntry.MENU_ID_CONFIG);
+		overlayMenuEntry.setConfigGroup(configGroup);
+		menuEntries.add(overlayMenuEntry);
+//		addMenuEntry(option, target, 1, );
+	}
+
+	public void addMenuEntry(String option, String target, int identifier, int param1, int param2) {
+
 	}
 }

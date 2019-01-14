@@ -63,6 +63,9 @@ class PluginListItem extends JPanel
 	@Nullable
 	private final Plugin plugin;
 
+	@Nullable Config config;
+	@Nullable ConfigDescriptor configDescriptor;
+
 	@Getter
 	private final String name;
 
@@ -132,6 +135,8 @@ class PluginListItem extends JPanel
 	{
 		this.configPanel = configPanel;
 		this.plugin = plugin;
+		this.config = config;
+		this.configDescriptor = configDescriptor;
 		this.name = name;
 		this.description = description;
 		Collections.addAll(keywords, name.toLowerCase().split(" "));

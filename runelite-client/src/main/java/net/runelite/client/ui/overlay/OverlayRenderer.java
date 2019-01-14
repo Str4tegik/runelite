@@ -34,7 +34,6 @@ import java.awt.Rectangle;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.List;
-import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.swing.SwingUtilities;
@@ -263,8 +262,9 @@ public class OverlayRenderer extends MouseAdapter implements KeyListener
 					graphics.setColor(previous);
 				}
 
-				final boolean toggleCheck = inOverlayMenuMode || !runeLiteConfig.overlayRightClick();
-				final Point mouse = new Point(client.getMouseCanvasPosition().getX(), client.getMouseCanvasPosition().getY());
+				final boolean toggleCheck = true ; //  inOverlayMenuMode || !runeLiteConfig.overlayRightClick();
+				net.runelite.api.Point mouseCanvasPosition = client.getMouseCanvasPosition();
+				final Point mouse = new Point(mouseCanvasPosition.getX(), mouseCanvasPosition.getY());
 				if (toggleCheck && bounds.contains(mouse) && !client.isMenuOpen())
 				{
 					menuEntries = createRightClickMenuEntries(overlay);
@@ -550,20 +550,22 @@ public class OverlayRenderer extends MouseAdapter implements KeyListener
 
 	private static MenuEntry[] createRightClickMenuEntries(Overlay overlay)
 	{
-		final Set<String> options = overlay.getMenuOptions().keySet();
-		final MenuEntry[] entries = new MenuEntry[options.size()];
+		List<OverlayMenuEntry> menuEntries = overlay.getMenuEntries();
+		final MenuEntry[] entries = new MenuEntry[menuEntries.size()];
 
 		// Add in reverse order so they display correctly in the right-click menu
-		int idx = options.size() - 1;
-		for (final String option : options)
+		for (int i = menuEntries.size() - 1; i >= 0; --i)
 		{
-			final MenuEntry entry = new MenuEntry();
-			entry.setOption(option);
-			entry.setTarget(ColorUtil.wrapWithColorTag(overlay.getName(), JagexColors.MENU_TARGET));
-			entry.setIdentifier(-1);
-			entry.setType(MenuAction.RUNELITE_OVERLAY.getId());
+			OverlayMenuEntry overlayMenuEntry = menuEntries.get(i);
 
-			entries[idx--] = entry;
+			final MenuEntry entry = new MenuEntry();
+			entry.setOption(overlayMenuEntry.getOption());
+			entry.setTarget(ColorUtil.wrapWithColorTag(overlayMenuEntry.getTarget(), JagexColors.MENU_TARGET));
+			entry.setType(MenuAction.RUNELITE_OVERLAY.getId());
+			entry.setIdentifier(overlay.id); // overlay
+			entry.setParam0(i); // menu entry
+
+			entries[i] = entry;
 		}
 
 		return entries;
