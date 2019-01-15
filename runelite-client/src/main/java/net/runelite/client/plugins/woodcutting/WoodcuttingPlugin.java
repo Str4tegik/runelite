@@ -52,6 +52,7 @@ import net.runelite.client.plugins.PluginDependency;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.plugins.xptracker.XpTrackerPlugin;
 import net.runelite.client.ui.overlay.OverlayManager;
+import static net.runelite.client.ui.overlay.OverlayManager.OPTION_CONFIGURE;
 
 @PluginDescriptor(
 	name = "Woodcutting",
@@ -100,13 +101,13 @@ public class WoodcuttingPlugin extends Plugin
 		overlayManager.add(overlay);
 		overlayManager.add(treesOverlay);
 
-		overlayManager.addMenu(overlay, RUNELITE_OVERLAY_CONFIG, "Configure", "Woodcutting overlay");
+		overlayManager.addMenu(overlay, RUNELITE_OVERLAY_CONFIG, OPTION_CONFIGURE, "Woodcutting overlay");
 	}
 
 	@Override
 	protected void shutDown() throws Exception
 	{
-		overlayManager.removeMenu(overlay, "Configure");
+		overlayManager.removeMenu(overlay, OPTION_CONFIGURE);
 
 		overlayManager.remove(overlay);
 		overlayManager.remove(treesOverlay);

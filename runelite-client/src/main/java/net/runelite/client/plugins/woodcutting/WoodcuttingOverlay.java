@@ -54,7 +54,6 @@ class WoodcuttingOverlay extends Overlay
 		this.plugin = plugin;
 		this.config = config;
 		this.xpTrackerService = xpTrackerService;
-//		addConfigurationMenu("Configure", "Woodcutting overlay", WoodcuttingPlugin.class.getAnnotation(PluginDescriptor.class).name());
 	}
 
 	@Override

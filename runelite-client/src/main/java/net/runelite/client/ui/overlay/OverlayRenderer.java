@@ -557,7 +557,7 @@ public class OverlayRenderer extends MouseAdapter implements KeyListener
 
 	private MenuEntry[] createRightClickMenuEntries(Overlay overlay)
 	{
-		List<OverlayMenuEntry> menuEntries = overlay.getMenuEntries();
+		List<OverlayMenuEntry> menuEntries = overlay.menuEntries;
 		final MenuEntry[] entries = new MenuEntry[menuEntries.size()];
 
 		// Add in reverse order so they display correctly in the right-click menu

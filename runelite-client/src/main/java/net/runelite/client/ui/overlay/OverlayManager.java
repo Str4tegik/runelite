@@ -56,6 +56,8 @@ import net.runelite.client.plugins.PluginManager;
 @Singleton
 public class OverlayManager
 {
+	public static final String OPTION_CONFIGURE = "Configure";
+
 	private static final String OVERLAY_CONFIG_PREFERRED_LOCATION = "_preferredLocation";
 	private static final String OVERLAY_CONFIG_PREFERRED_POSITION = "_preferredPosition";
 	private static final String OVERLAY_CONFIG_PREFERRED_SIZE = "_preferredSize";
@@ -120,7 +122,7 @@ public class OverlayManager
 	@Subscribe
 	public void onMenuOptionClicked(MenuOptionClicked event)
 	{
-		if (event.getMenuAction() != MenuAction.RUNELITE_OVERLAY && event.getMenuAction() != MenuAction.RUNELITE_OVERLAY_CONFIG)
+		if (event.getMenuAction() != MenuAction.RUNELITE_OVERLAY)
 		{
 			return;
 		}
@@ -132,7 +134,7 @@ public class OverlayManager
 		Optional<Overlay> optionalOverlay = overlays.stream().filter(o -> overlayId(o) == event.getId()).findFirst();
 		if (optionalOverlay.isPresent()) {
 			Overlay overlay = optionalOverlay.get();
-			List<OverlayMenuEntry> menuEntries = overlay.getMenuEntries();
+			List<OverlayMenuEntry> menuEntries = overlay.menuEntries;
 			Optional<OverlayMenuEntry> optionalOverlayMenuEntry = menuEntries.stream().filter(me -> me.getOption().equals(event.getMenuOption())).findFirst();
 			if (optionalOverlayMenuEntry.isPresent()) {
 				eventBus.post(new OverlayMenuClicked(optionalOverlayMenuEntry.get(), overlay));
@@ -145,23 +147,11 @@ public class OverlayManager
 	}
 
 	public void addMenu(Overlay overlay, MenuAction menuAction, String option, String target) {
-//		Plugin plugin = overlay.getPlugin();
-//		if (plugin == null) {
-//			throw new IllegalArgumentException("Overlay must have a plugin");
-//		}
-//		final PluginDescriptor descriptor = plugin.getClass().getAnnotation(PluginDescriptor.class);
-//		final Config config = pluginManager.getPluginConfigProxy(plugin);
-//		final ConfigDescriptor configDescriptor = config == null ? null : configManager.getConfigDescriptor(config);
-
 		OverlayMenuEntry overlayMenuEntry = new OverlayMenuEntry();
 		overlayMenuEntry.setMenuAction(menuAction);
 		overlayMenuEntry.setOption(option);
 		overlayMenuEntry.setTarget(target);
-//		overlayMenuEntry.setIdentifier(OverlayMenuEntry.MENU_ID_CONFIG);
-//		overlayMenuEntry.setConfigGroup(descriptor.name());
 		overlay.menuEntries.add(overlayMenuEntry);
-//		menuEntries.add(overlayMenuEntry);
-//		addMenuEntry(option, target, 1, );
 	}
 
 	public void removeMenu(Overlay overlay, String option)
