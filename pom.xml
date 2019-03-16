@@ -188,7 +188,7 @@
 				<version>3.0.0-M1</version>
 				<configuration>
 					<!-- Fix Javadoc on Java 11+ - JDK-8212233 -->
-					<souce>8</source>
+					<source>8</source>
 				</configuration>
 				<executions>
 					<execution>
