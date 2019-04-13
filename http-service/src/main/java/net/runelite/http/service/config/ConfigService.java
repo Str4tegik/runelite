@@ -32,6 +32,7 @@ import com.mongodb.client.MongoDatabase;
 import static com.mongodb.client.model.Filters.eq;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
+import com.mongodb.client.model.UpdateOptions;
 import static com.mongodb.client.model.Updates.set;
 import static com.mongodb.client.model.Updates.unset;
 import java.util.ArrayList;
@@ -68,6 +69,7 @@ public class ConfigService
 
 	private final Sql2o sql2o;
 	private final Gson GSON = RuneLiteAPI.GSON;
+	private final UpdateOptions upsertUpdateOptions = new UpdateOptions().upsert(true);
 
 	private final MongoCollection<Document> mongoCollection;
 
@@ -182,7 +184,8 @@ public class ConfigService
 
 		Object jsonValue = parseJsonString(value);
 		mongoCollection.updateOne(eq("_userId", userId),
-			set(split[0] + "." + split[1].replace('.', ':'), jsonValue));
+			set(split[0] + "." + split[1].replace('.', ':'), jsonValue),
+			upsertUpdateOptions);
 	}
 
 	public void unsetKey(
