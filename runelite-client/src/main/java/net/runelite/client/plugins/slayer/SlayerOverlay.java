@@ -87,6 +87,7 @@ class SlayerOverlay extends WidgetItemOverlay
 	{
 		this.plugin = plugin;
 		this.config = config;
+		setDrawOnBank(false);
 	}
 
 	@Override

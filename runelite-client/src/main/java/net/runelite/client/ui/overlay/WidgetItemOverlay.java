@@ -29,12 +29,17 @@ import java.awt.Graphics2D;
 import java.util.List;
 import lombok.AccessLevel;
 import lombok.Setter;
+import net.runelite.api.widgets.Widget;
+import static net.runelite.api.widgets.WidgetID.BANK_GROUP_ID;
+import static net.runelite.api.widgets.WidgetInfo.TO_GROUP;
 import net.runelite.api.widgets.WidgetItem;
 
 public abstract class WidgetItemOverlay extends Overlay
 {
 	@Setter(AccessLevel.PACKAGE)
 	private OverlayManager overlayManager;
+	@Setter(AccessLevel.PROTECTED)
+	private boolean drawOnBank = true;
 
 	protected WidgetItemOverlay()
 	{
@@ -49,9 +54,17 @@ public abstract class WidgetItemOverlay extends Overlay
 	public Dimension render(Graphics2D graphics)
 	{
 		final List<WidgetItem> itemWidgets = overlayManager.getItemWidgets();
-		for (WidgetItem widget : itemWidgets)
+		for (WidgetItem widgetItem : itemWidgets)
 		{
-			renderItemOverlay(graphics, widget.getId(), widget);
+			Widget widget = widgetItem.getWidget();
+			int interfaceGroup = TO_GROUP(widget.getId());
+
+			if (!drawOnBank && interfaceGroup == BANK_GROUP_ID)
+			{
+				continue;
+			}
+
+			renderItemOverlay(graphics, widgetItem.getId(), widgetItem);
 		}
 		return null;
 	}

@@ -51,6 +51,7 @@ class ItemChargeOverlay extends WidgetItemOverlay
 	{
 		this.itemChargePlugin = itemChargePlugin;
 		this.config = config;
+		setDrawOnBank(false);
 	}
 
 	@Override
