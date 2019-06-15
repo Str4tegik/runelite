@@ -83,6 +83,17 @@ public class ExaminePluginTest
 		Guice.createInjector(BoundFieldModule.of(this)).injectMembers(this);
 	}
 
+	private ChatMessage createMessage(ChatMessageType type, String name, String message, String sender, int timestamp)
+	{
+		ChatMessage chatMessage = mock(ChatMessage.class);
+		when(chatMessage.getType()).thenReturn(type);
+		when(chatMessage.getName()).thenReturn(name);
+		when(chatMessage.getMessage()).thenReturn(message);
+		when(chatMessage.getSender()).thenReturn(sender);
+		when(chatMessage.getTimestamp()).thenReturn(timestamp);
+		return chatMessage;
+	}
+
 	@Test
 	public void testItem()
 	{
@@ -94,7 +105,7 @@ public class ExaminePluginTest
 		menuOptionClicked.setId(ItemID.ABYSSAL_WHIP);
 		examinePlugin.onMenuOptionClicked(menuOptionClicked);
 
-		ChatMessage chatMessage = new ChatMessage(null, ChatMessageType.ITEM_EXAMINE, "", "A weapon from the abyss.", "", 0);
+		ChatMessage chatMessage = createMessage(ChatMessageType.ITEM_EXAMINE, "", "A weapon from the abyss.", "", 0);
 		examinePlugin.onChatMessage(chatMessage);
 
 		// This passes due to not mocking the ItemComposition for the whip
@@ -112,7 +123,7 @@ public class ExaminePluginTest
 		menuOptionClicked.setId(ItemID.ABYSSAL_WHIP);
 		examinePlugin.onMenuOptionClicked(menuOptionClicked);
 
-		ChatMessage chatMessage = new ChatMessage(null, ChatMessageType.ITEM_EXAMINE, "", "100000 x Abyssal whip", "", 0);
+		ChatMessage chatMessage = createMessage(ChatMessageType.ITEM_EXAMINE, "", "100000 x Abyssal whip", "", 0);
 		examinePlugin.onChatMessage(chatMessage);
 
 		verify(examineClient, never()).submitItem(anyInt(), anyString());

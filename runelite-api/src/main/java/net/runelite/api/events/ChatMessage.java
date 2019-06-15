@@ -47,27 +47,29 @@ public class ChatMessage
 	 * The underlying MessageNode for the message.
 	 */
 	private MessageNode messageNode;
-	/**
-	 * The type of message received.
-	 */
-	private ChatMessageType type;
-	/**
-	 * The name of the player that sent the message.
-	 */
-	private String name;
-	/**
-	 * The contents of the message.
-	 */
-	private String message;
-	/**
-	 * The sender of the message.
-	 * <p>
-	 * This field is only used for clan messages and refers to the
-	 * current name of the clan chat the client is in.
-	 */
-	private String sender;
-	/**
-	 * Timestamp of the message.
-	 */
-	private int timestamp;
+
+	public ChatMessageType getType()
+	{
+		return messageNode.getType();
+	}
+
+	public String getName()
+	{
+		return messageNode.getName();
+	}
+
+	public String getMessage()
+	{
+		return messageNode.getValue();
+	}
+
+	public String getSender()
+	{
+		return messageNode.getSender();
+	}
+
+	public int getTimestamp()
+	{
+		return messageNode.getTimestamp();
+	}
 }

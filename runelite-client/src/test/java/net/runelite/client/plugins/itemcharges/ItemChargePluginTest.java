@@ -40,8 +40,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import static org.mockito.Matchers.eq;
 import org.mockito.Mock;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import org.mockito.runners.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -85,25 +87,36 @@ public class ItemChargePluginTest
 		Guice.createInjector(BoundFieldModule.of(this)).injectMembers(this);
 	}
 
+	private ChatMessage createMessage(ChatMessageType type, String name, String message, String sender, int timestamp)
+	{
+		ChatMessage chatMessage = mock(ChatMessage.class);
+		when(chatMessage.getType()).thenReturn(type);
+		when(chatMessage.getName()).thenReturn(name);
+		when(chatMessage.getMessage()).thenReturn(message);
+		when(chatMessage.getSender()).thenReturn(sender);
+		when(chatMessage.getTimestamp()).thenReturn(timestamp);
+		return chatMessage;
+	}
+
 	@Test
 	public void testOnChatMessage()
 	{
-		ChatMessage chatMessage = new ChatMessage(null, ChatMessageType.GAMEMESSAGE, "", CHECK, "", 0);
+		ChatMessage chatMessage = createMessage(ChatMessageType.GAMEMESSAGE, "", CHECK, "", 0);
 		itemChargePlugin.onChatMessage(chatMessage);
 		verify(config).dodgyNecklace(eq(10));
 		reset(config);
 
-		chatMessage = new ChatMessage(null, ChatMessageType.GAMEMESSAGE, "", PROTECT, "", 0);
+		chatMessage = createMessage(ChatMessageType.GAMEMESSAGE, "", PROTECT, "", 0);
 		itemChargePlugin.onChatMessage(chatMessage);
 		verify(config).dodgyNecklace(eq(9));
 		reset(config);
 
-		chatMessage = new ChatMessage(null, ChatMessageType.GAMEMESSAGE, "", PROTECT_1, "", 0);
+		chatMessage = createMessage(ChatMessageType.GAMEMESSAGE, "", PROTECT_1, "", 0);
 		itemChargePlugin.onChatMessage(chatMessage);
 		verify(config).dodgyNecklace(eq(1));
 		reset(config);
 
-		chatMessage = new ChatMessage(null, ChatMessageType.GAMEMESSAGE, "", BREAK, "", 0);
+		chatMessage = createMessage(ChatMessageType.GAMEMESSAGE, "", BREAK, "", 0);
 		itemChargePlugin.onChatMessage(chatMessage);
 		verify(config).dodgyNecklace(eq(10));
 		reset(config);

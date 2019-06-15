@@ -83,9 +83,9 @@ public class ChatNotificationsPluginTest
 		MessageNode messageNode = mock(MessageNode.class);
 		when(messageNode.getValue()).thenReturn("Deathbeam, Deathbeam OSRS");
 
-		ChatMessage chatMessage = new ChatMessage();
-		chatMessage.setType(ChatMessageType.PUBLICCHAT);
-		chatMessage.setMessageNode(messageNode);
+		ChatMessage chatMessage = mock(ChatMessage.class);
+		when(chatMessage.getType()).thenReturn(ChatMessageType.PUBLICCHAT);
+		when(chatMessage.getMessageNode()).thenReturn(messageNode);
 
 		chatNotificationsPlugin.startUp(); // load highlight config
 		chatNotificationsPlugin.onChatMessage(chatMessage);

@@ -37,6 +37,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import org.mockito.runners.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -66,10 +68,21 @@ public class SmeltingPluginTest
 		Guice.createInjector(BoundFieldModule.of(this)).injectMembers(this);
 	}
 
+	private ChatMessage createMessage(ChatMessageType type, String name, String message, String sender, int timestamp)
+	{
+		ChatMessage chatMessage = mock(ChatMessage.class);
+		when(chatMessage.getType()).thenReturn(type);
+		when(chatMessage.getName()).thenReturn(name);
+		when(chatMessage.getMessage()).thenReturn(message);
+		when(chatMessage.getSender()).thenReturn(sender);
+		when(chatMessage.getTimestamp()).thenReturn(timestamp);
+		return chatMessage;
+	}
+
 	@Test
 	public void testCannonballs()
 	{
-		ChatMessage chatMessage = new ChatMessage(null, ChatMessageType.SPAM, "", SMELT_CANNONBALL, "", 0);
+		ChatMessage chatMessage = createMessage(ChatMessageType.SPAM, "", SMELT_CANNONBALL, "", 0);
 		smeltingPlugin.onChatMessage(chatMessage);
 
 		SmeltingSession smeltingSession = smeltingPlugin.getSession();
@@ -80,7 +93,7 @@ public class SmeltingPluginTest
 	@Test
 	public void testBars()
 	{
-		ChatMessage chatMessage = new ChatMessage(null, ChatMessageType.SPAM, "", SMELT_BAR, "", 0);
+		ChatMessage chatMessage = createMessage(ChatMessageType.SPAM, "", SMELT_BAR, "", 0);
 		smeltingPlugin.onChatMessage(chatMessage);
 
 		SmeltingSession smeltingSession = smeltingPlugin.getSession();

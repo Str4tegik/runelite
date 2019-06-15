@@ -95,12 +95,23 @@ public class CookingPluginTest
 		Guice.createInjector(BoundFieldModule.of(this)).injectMembers(this);
 	}
 
+	private ChatMessage createMessage(ChatMessageType type, String name, String message, String sender, int timestamp)
+	{
+		ChatMessage chatMessage = mock(ChatMessage.class);
+		when(chatMessage.getType()).thenReturn(type);
+		when(chatMessage.getName()).thenReturn(name);
+		when(chatMessage.getMessage()).thenReturn(message);
+		when(chatMessage.getSender()).thenReturn(sender);
+		when(chatMessage.getTimestamp()).thenReturn(timestamp);
+		return chatMessage;
+	}
+
 	@Test
 	public void testOnChatMessage()
 	{
 		for (String message : COOKING_MESSAGES)
 		{
-			ChatMessage chatMessage = new ChatMessage(null, ChatMessageType.SPAM, "", message, "", 0);
+			ChatMessage chatMessage = createMessage(ChatMessageType.SPAM, "", message, "", 0);
 			cookingPlugin.onChatMessage(chatMessage);
 		}
 

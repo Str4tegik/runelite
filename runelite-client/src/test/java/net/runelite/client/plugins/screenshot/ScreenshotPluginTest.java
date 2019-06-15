@@ -30,6 +30,7 @@ import com.google.inject.testing.fieldbinder.BoundFieldModule;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Consumer;
 import javax.inject.Inject;
+import net.runelite.api.ChatMessageType;
 import static net.runelite.api.ChatMessageType.GAMEMESSAGE;
 import net.runelite.api.Client;
 import net.runelite.api.events.ChatMessage;
@@ -107,10 +108,21 @@ public class ScreenshotPluginTest
 		when(screenshotConfig.screenshotUntradeableDrop()).thenReturn(true);
 	}
 
+	private ChatMessage createMessage(ChatMessageType type, String name, String message, String sender, int timestamp)
+	{
+		ChatMessage chatMessage = mock(ChatMessage.class);
+		when(chatMessage.getType()).thenReturn(type);
+		when(chatMessage.getName()).thenReturn(name);
+		when(chatMessage.getMessage()).thenReturn(message);
+		when(chatMessage.getSender()).thenReturn(sender);
+		when(chatMessage.getTimestamp()).thenReturn(timestamp);
+		return chatMessage;
+	}
+
 	@Test
 	public void testClueScroll()
 	{
-		ChatMessage chatMessageEvent = new ChatMessage(null, GAMEMESSAGE, "Seth", CLUE_SCROLL, null, 0);
+		ChatMessage chatMessageEvent = createMessage(GAMEMESSAGE, "Seth", CLUE_SCROLL, null, 0);
 		screenshotPlugin.onChatMessage(chatMessageEvent);
 
 		assertEquals("medium", screenshotPlugin.getClueType());
@@ -120,7 +132,7 @@ public class ScreenshotPluginTest
 	@Test
 	public void testBarrowsChest()
 	{
-		ChatMessage chatMessageEvent = new ChatMessage(null, GAMEMESSAGE, "Seth", BARROWS_CHEST, null, 0);
+		ChatMessage chatMessageEvent = createMessage(GAMEMESSAGE, "Seth", BARROWS_CHEST, null, 0);
 		screenshotPlugin.onChatMessage(chatMessageEvent);
 
 		assertEquals(310, screenshotPlugin.getBarrowsNumber());
@@ -129,7 +141,7 @@ public class ScreenshotPluginTest
 	@Test
 	public void testChambersOfXericChest()
 	{
-		ChatMessage chatMessageEvent = new ChatMessage(null, GAMEMESSAGE, "Seth", CHAMBERS_OF_XERIC_CHEST, null, 0);
+		ChatMessage chatMessageEvent = createMessage(GAMEMESSAGE, "Seth", CHAMBERS_OF_XERIC_CHEST, null, 0);
 		screenshotPlugin.onChatMessage(chatMessageEvent);
 
 		assertEquals(489, screenshotPlugin.getChambersOfXericNumber());
@@ -138,7 +150,7 @@ public class ScreenshotPluginTest
 	@Test
 	public void testTheatreOfBloodChest()
 	{
-		ChatMessage chatMessageEvent = new ChatMessage(null, GAMEMESSAGE, "Magic fTail", THEATRE_OF_BLOOD_CHEST, null, 0);
+		ChatMessage chatMessageEvent = createMessage(GAMEMESSAGE, "Magic fTail", THEATRE_OF_BLOOD_CHEST, null, 0);
 		screenshotPlugin.onChatMessage(chatMessageEvent);
 
 		assertEquals(73, screenshotPlugin.gettheatreOfBloodNumber());
@@ -147,7 +159,7 @@ public class ScreenshotPluginTest
 	@Test
 	public void testValuableDrop()
 	{
-		ChatMessage chatMessageEvent = new ChatMessage(null, GAMEMESSAGE, "", VALUABLE_DROP, null, 0);
+		ChatMessage chatMessageEvent = createMessage(GAMEMESSAGE, "", VALUABLE_DROP, null, 0);
 		screenshotPlugin.onChatMessage(chatMessageEvent);
 
 		verify(drawManager).requestNextFrameListener(Matchers.any(Consumer.class));
@@ -156,7 +168,7 @@ public class ScreenshotPluginTest
 	@Test
 	public void testUntradeableDrop()
 	{
-		ChatMessage chatMessageEvent = new ChatMessage(null, GAMEMESSAGE, "", UNTRADEABLE_DROP, null, 0);
+		ChatMessage chatMessageEvent = createMessage(GAMEMESSAGE, "", UNTRADEABLE_DROP, null, 0);
 		screenshotPlugin.onChatMessage(chatMessageEvent);
 
 		verify(drawManager).requestNextFrameListener(Matchers.any(Consumer.class));

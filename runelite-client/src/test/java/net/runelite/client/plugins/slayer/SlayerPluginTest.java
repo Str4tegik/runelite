@@ -164,6 +164,17 @@ public class SlayerPluginTest
 		Guice.createInjector(BoundFieldModule.of(this)).injectMembers(this);
 	}
 
+	private ChatMessage createMessage(ChatMessageType type, String name, String message, String sender, int timestamp)
+	{
+		ChatMessage chatMessage = mock(ChatMessage.class);
+		when(chatMessage.getType()).thenReturn(type);
+		when(chatMessage.getName()).thenReturn(name);
+		when(chatMessage.getMessage()).thenReturn(message);
+		when(chatMessage.getSender()).thenReturn(sender);
+		when(chatMessage.getTimestamp()).thenReturn(timestamp);
+		return chatMessage;
+	}
+
 	@Test
 	public void testNewTask()
 	{
@@ -268,7 +279,7 @@ public class SlayerPluginTest
 	@Test
 	public void testPartnerTask()
 	{
-		ChatMessage chatMessageEvent = new ChatMessage(null, GAMEMESSAGE, "", TASK_NEW_FROM_PARTNER, null, 0);
+		ChatMessage chatMessageEvent = createMessage(GAMEMESSAGE, "", TASK_NEW_FROM_PARTNER, null, 0);
 		slayerPlugin.onChatMessage(chatMessageEvent);
 
 		assertEquals("Dust Devils", slayerPlugin.getTaskName());
@@ -278,7 +289,7 @@ public class SlayerPluginTest
 	@Test
 	public void testCheckSlayerGem()
 	{
-		ChatMessage chatMessageEvent = new ChatMessage(null, GAMEMESSAGE, "", TASK_CHECKSLAYERGEM, null, 0);
+		ChatMessage chatMessageEvent = createMessage(GAMEMESSAGE, "", TASK_CHECKSLAYERGEM, null, 0);
 		slayerPlugin.onChatMessage(chatMessageEvent);
 		assertEquals("Suqahs", slayerPlugin.getTaskName());
 		assertEquals(211, slayerPlugin.getAmount());
@@ -287,7 +298,7 @@ public class SlayerPluginTest
 	@Test
 	public void testCheckSlayerGemWildernessTask()
 	{
-		ChatMessage chatMessageEvent = new ChatMessage(null, GAMEMESSAGE, "", TASK_CHECKSLAYERGEM_WILDERNESS, null, 0);
+		ChatMessage chatMessageEvent = createMessage(GAMEMESSAGE, "", TASK_CHECKSLAYERGEM_WILDERNESS, null, 0);
 		slayerPlugin.onChatMessage(chatMessageEvent);
 		assertEquals("Suqahs", slayerPlugin.getTaskName());
 		assertEquals(211, slayerPlugin.getAmount());
@@ -297,7 +308,7 @@ public class SlayerPluginTest
 	@Test
 	public void testCheckSlayerGemKonarTask()
 	{
-		ChatMessage chatMessageEvent = new ChatMessage(null, GAMEMESSAGE, "", TASK_CHECKSLAYERGEM_KONAR, null, 0);
+		ChatMessage chatMessageEvent = createMessage(GAMEMESSAGE, "", TASK_CHECKSLAYERGEM_KONAR, null, 0);
 		slayerPlugin.onChatMessage(chatMessageEvent);
 
 		assertEquals("Blue dragons", slayerPlugin.getTaskName());
@@ -335,7 +346,7 @@ public class SlayerPluginTest
 	@Test
 	public void testOneTask()
 	{
-		ChatMessage chatMessageEvent = new ChatMessage(null, GAMEMESSAGE, "Perterter", TASK_ONE, null, 0);
+		ChatMessage chatMessageEvent = createMessage(GAMEMESSAGE, "Perterter", TASK_ONE, null, 0);
 		slayerPlugin.onChatMessage(chatMessageEvent);
 
 		assertEquals(1, slayerPlugin.getStreak());
@@ -346,7 +357,7 @@ public class SlayerPluginTest
 	@Test
 	public void testNoPoints()
 	{
-		ChatMessage chatMessageEvent = new ChatMessage(null, GAMEMESSAGE, "Perterter", TASK_COMPLETE_NO_POINTS, null, 0);
+		ChatMessage chatMessageEvent = createMessage(GAMEMESSAGE, "Perterter", TASK_COMPLETE_NO_POINTS, null, 0);
 		slayerPlugin.onChatMessage(chatMessageEvent);
 
 		assertEquals(3, slayerPlugin.getStreak());
@@ -357,7 +368,7 @@ public class SlayerPluginTest
 	@Test
 	public void testPoints()
 	{
-		ChatMessage chatMessageEvent = new ChatMessage(null, GAMEMESSAGE, "Perterter", TASK_POINTS, null, 0);
+		ChatMessage chatMessageEvent = createMessage(GAMEMESSAGE, "Perterter", TASK_POINTS, null, 0);
 		slayerPlugin.onChatMessage(chatMessageEvent);
 
 		assertEquals(9, slayerPlugin.getStreak());
@@ -369,7 +380,7 @@ public class SlayerPluginTest
 	@Test
 	public void testLargeStreak()
 	{
-		ChatMessage chatMessageEvent = new ChatMessage(null, GAMEMESSAGE, "Perterter", TASK_LARGE_STREAK, null, 0);
+		ChatMessage chatMessageEvent = createMessage(GAMEMESSAGE, "Perterter", TASK_LARGE_STREAK, null, 0);
 		slayerPlugin.onChatMessage(chatMessageEvent);
 
 		assertEquals(2465, slayerPlugin.getStreak());
@@ -384,7 +395,7 @@ public class SlayerPluginTest
 		slayerPlugin.setTaskName("cows");
 		slayerPlugin.setAmount(42);
 
-		ChatMessage chatMessageEvent = new ChatMessage(null, GAMEMESSAGE, "Perterter", TASK_COMPLETE, null, 0);
+		ChatMessage chatMessageEvent = createMessage(GAMEMESSAGE, "Perterter", TASK_COMPLETE, null, 0);
 		slayerPlugin.onChatMessage(chatMessageEvent);
 
 		assertEquals("", slayerPlugin.getTaskName());
@@ -397,7 +408,7 @@ public class SlayerPluginTest
 		slayerPlugin.setTaskName("cows");
 		slayerPlugin.setAmount(42);
 
-		ChatMessage chatMessageEvent = new ChatMessage(null, GAMEMESSAGE, "Perterter", TASK_CANCELED, null, 0);
+		ChatMessage chatMessageEvent = createMessage(GAMEMESSAGE, "Perterter", TASK_CANCELED, null, 0);
 		slayerPlugin.onChatMessage(chatMessageEvent);
 
 		assertEquals("", slayerPlugin.getTaskName());
@@ -407,7 +418,7 @@ public class SlayerPluginTest
 	@Test
 	public void testSuperiorNotification()
 	{
-		ChatMessage chatMessageEvent = new ChatMessage(null, GAMEMESSAGE, "Superior", SUPERIOR_MESSAGE, null, 0);
+		ChatMessage chatMessageEvent = createMessage(GAMEMESSAGE, "Superior", SUPERIOR_MESSAGE, null, 0);
 
 		when(slayerConfig.showSuperiorNotification()).thenReturn(true);
 		slayerPlugin.onChatMessage(chatMessageEvent);
@@ -421,7 +432,7 @@ public class SlayerPluginTest
 	@Test
 	public void testBraceletSlaughter()
 	{
-		ChatMessage chatMessageEvent = new ChatMessage(null, GAMEMESSAGE, "", BRACLET_SLAUGHTER, null, 0);
+		ChatMessage chatMessageEvent = createMessage(GAMEMESSAGE, "", BRACLET_SLAUGHTER, null, 0);
 
 		slayerPlugin.setAmount(42);
 		slayerPlugin.setSlaughterChargeCount(10);
@@ -431,18 +442,18 @@ public class SlayerPluginTest
 		assertEquals(9, slayerPlugin.getSlaughterChargeCount());
 		assertEquals(43, slayerPlugin.getAmount());
 
-		chatMessageEvent = new ChatMessage(null, GAMEMESSAGE, "", CHAT_BRACELET_SLAUGHTER_CHARGE, null, 0);
+		chatMessageEvent = createMessage(GAMEMESSAGE, "", CHAT_BRACELET_SLAUGHTER_CHARGE, null, 0);
 		slayerPlugin.onChatMessage(chatMessageEvent);
 
 		assertEquals(12, slayerPlugin.getSlaughterChargeCount());
 
-		chatMessageEvent = new ChatMessage(null, GAMEMESSAGE, "", CHAT_BRACELET_SLAUGHTER_CHARGE_ONE, null, 0);
+		chatMessageEvent = createMessage(GAMEMESSAGE, "", CHAT_BRACELET_SLAUGHTER_CHARGE_ONE, null, 0);
 		slayerPlugin.onChatMessage(chatMessageEvent);
 
 		assertEquals(1, slayerPlugin.getSlaughterChargeCount());
 
 		slayerPlugin.setSlaughterChargeCount(1);
-		chatMessageEvent = new ChatMessage(null, GAMEMESSAGE, "", BRACLET_SLAUGHTER_V3, null, 0);
+		chatMessageEvent = createMessage(GAMEMESSAGE, "", BRACLET_SLAUGHTER_V3, null, 0);
 		slayerPlugin.onChatMessage(chatMessageEvent);
 
 		assertEquals(30, slayerPlugin.getSlaughterChargeCount());
@@ -455,7 +466,7 @@ public class SlayerPluginTest
 		slayerPlugin.onGameTick(new GameTick());
 		assertEquals(30, slayerPlugin.getSlaughterChargeCount());
 
-		chatMessageEvent = new ChatMessage(null, GAMEMESSAGE, "", BRACLET_SLAUGHTER_V2, null, 0);
+		chatMessageEvent = createMessage(GAMEMESSAGE, "", BRACLET_SLAUGHTER_V2, null, 0);
 
 		slayerPlugin.setAmount(42);
 		slayerPlugin.setSlaughterChargeCount(2);
@@ -469,7 +480,7 @@ public class SlayerPluginTest
 	@Test
 	public void testBraceletExpeditious()
 	{
-		ChatMessage chatMessageEvent = new ChatMessage(null, GAMEMESSAGE, "", BRACLET_EXPEDITIOUS, null, 0);
+		ChatMessage chatMessageEvent = createMessage(GAMEMESSAGE, "", BRACLET_EXPEDITIOUS, null, 0);
 
 		slayerPlugin.setAmount(42);
 		slayerPlugin.setExpeditiousChargeCount(10);
@@ -479,18 +490,18 @@ public class SlayerPluginTest
 		assertEquals(41, slayerPlugin.getAmount());
 		assertEquals(9, slayerPlugin.getExpeditiousChargeCount());
 
-		chatMessageEvent = new ChatMessage(null, GAMEMESSAGE, "", CHAT_BRACELET_EXPEDITIOUS_CHARGE, null, 0);
+		chatMessageEvent = createMessage(GAMEMESSAGE, "", CHAT_BRACELET_EXPEDITIOUS_CHARGE, null, 0);
 		slayerPlugin.onChatMessage(chatMessageEvent);
 
 		assertEquals(12, slayerPlugin.getExpeditiousChargeCount());
 
-		chatMessageEvent = new ChatMessage(null, GAMEMESSAGE, "", CHAT_BRACELET_EXPEDITIOUS_CHARGE_ONE, null, 0);
+		chatMessageEvent = createMessage(GAMEMESSAGE, "", CHAT_BRACELET_EXPEDITIOUS_CHARGE_ONE, null, 0);
 		slayerPlugin.onChatMessage(chatMessageEvent);
 
 		assertEquals(1, slayerPlugin.getExpeditiousChargeCount());
 
 		slayerPlugin.setExpeditiousChargeCount(1);
-		chatMessageEvent = new ChatMessage(null, GAMEMESSAGE, "", BRACLET_EXPEDITIOUS_V3, null, 0);
+		chatMessageEvent = createMessage(GAMEMESSAGE, "", BRACLET_EXPEDITIOUS_V3, null, 0);
 		slayerPlugin.onChatMessage(chatMessageEvent);
 
 		assertEquals(30, slayerPlugin.getExpeditiousChargeCount());
@@ -503,7 +514,7 @@ public class SlayerPluginTest
 		slayerPlugin.onGameTick(new GameTick());
 		assertEquals(30, slayerPlugin.getExpeditiousChargeCount());
 
-		chatMessageEvent = new ChatMessage(null, GAMEMESSAGE, "", BRACLET_EXPEDITIOUS_V2, null, 0);
+		chatMessageEvent = createMessage(GAMEMESSAGE, "", BRACLET_EXPEDITIOUS_V2, null, 0);
 
 		slayerPlugin.setAmount(42);
 		slayerPlugin.setExpeditiousChargeCount(2);
@@ -524,7 +535,7 @@ public class SlayerPluginTest
 		slayerPlugin.setTaskName("Suqahs");
 		slayerPlugin.setAmount(231);
 
-		ChatMessage chatMessage = new ChatMessage(null, GAMEMESSAGE, "", TASK_UPDATE_COMBAT_BRACELET, null, 0);
+		ChatMessage chatMessage = createMessage(GAMEMESSAGE, "", TASK_UPDATE_COMBAT_BRACELET, null, 0);
 		slayerPlugin.onChatMessage(chatMessage);
 
 		assertEquals("Suqahs", slayerPlugin.getTaskName());
@@ -544,12 +555,12 @@ public class SlayerPluginTest
 		when(slayerConfig.taskCommand()).thenReturn(true);
 		when(chatClient.getTask(anyString())).thenReturn(task);
 
-		ChatMessage setMessage = new ChatMessage();
-		setMessage.setType(ChatMessageType.PUBLICCHAT);
-		setMessage.setName("Adam");
-		setMessage.setMessageNode(mock(MessageNode.class));
+		ChatMessage chatMessage = mock(ChatMessage.class);
+		when(chatMessage.getType()).thenReturn(ChatMessageType.PUBLICCHAT);
+		when(chatMessage.getName()).thenReturn("Adam");
+		when(chatMessage.getMessageNode()).thenReturn(mock(MessageNode.class));
 
-		slayerPlugin.taskLookup(setMessage, "!task");
+		slayerPlugin.taskLookup(chatMessage, "!task");
 
 		verify(chatMessageManager).update(any(MessageNode.class));
 	}
@@ -566,10 +577,9 @@ public class SlayerPluginTest
 		when(slayerConfig.taskCommand()).thenReturn(true);
 		when(chatClient.getTask(anyString())).thenReturn(task);
 
-		ChatMessage chatMessage = new ChatMessage();
-		chatMessage.setType(ChatMessageType.PUBLICCHAT);
-		chatMessage.setName("Adam");
-		chatMessage.setMessageNode(mock(MessageNode.class));
+		ChatMessage chatMessage = mock(ChatMessage.class);
+		when(chatMessage.getType()).thenReturn(ChatMessageType.PUBLICCHAT);
+		when(chatMessage.getName()).thenReturn("Adam");
 
 		slayerPlugin.taskLookup(chatMessage, "!task");
 

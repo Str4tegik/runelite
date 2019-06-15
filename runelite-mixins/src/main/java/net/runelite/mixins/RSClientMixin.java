@@ -1313,8 +1313,7 @@ public abstract class RSClientMixin implements RSClient
 		RSChatLineBuffer chatLineBuffer = chatLineMap.get(type);
 		MessageNode messageNode = chatLineBuffer.getLines()[0];
 
-		final ChatMessageType chatMessageType = ChatMessageType.of(type);
-		final ChatMessage chatMessage = new ChatMessage(messageNode, chatMessageType, name, message, sender, messageNode.getTimestamp());
+		final ChatMessage chatMessage = new ChatMessage(messageNode);
 		client.getCallbacks().post(chatMessage);
 	}
 
