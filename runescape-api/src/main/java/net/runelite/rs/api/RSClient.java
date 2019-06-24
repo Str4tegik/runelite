@@ -140,7 +140,6 @@ public interface RSClient extends RSGameEngine, Client
 	int getRSGameState();
 
 	@Import("checkClick")
-	@Override
 	void setCheckClick(boolean checkClick);
 
 	@Import("mouseX2")
@@ -986,4 +985,7 @@ public interface RSClient extends RSGameEngine, Client
 
 	@Import("healthBarSpriteCache")
 	RSNodeCache getHealthBarSpriteCache();
+
+	@Import("viewportWalking")
+	void setViewportWalking(boolean viewportWalking);
 }
