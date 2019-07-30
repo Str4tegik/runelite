@@ -91,6 +91,7 @@ public class ChatCommandsPlugin extends Plugin
 	private static final Pattern NEW_PB_PATTERN = Pattern.compile("(?:Fight|Lap) duration: <col=ff0000>([0-9:]+)</col> \\(new personal best\\)");
 	private static final Pattern DUEL_ARENA_WINS_PATTERN = Pattern.compile("You (were defeated|won)! You have(?: now)? won (\\d+) duels?");
 	private static final Pattern DUEL_ARENA_LOSSES_PATTERN = Pattern.compile("You have(?: now)? lost (\\d+) duels?");
+	private static final Pattern GAUNTLET_PB_PATTERN = Pattern.compile("(?:Corrupted challenge|Challenge) duration: <col=ff0000>([0-9:]+)</col>(?: \\(new personal best\\)|\\. Personal best: ([0-9:]+))");
 
 	private static final String TOTAL_LEVEL_COMMAND_STRING = "!total";
 	private static final String PRICE_COMMAND_STRING = "!price";
@@ -291,33 +292,47 @@ public class ChatCommandsPlugin extends Plugin
 			setKc("Barrows Chests", kc);
 		}
 
+		matcher = GAUNTLET_PB_PATTERN.matcher(message);
+		if (matcher.find())
+		{
+			// Message is just "Challenge duration" - so we assume this is Gauntlet
+			String boss = message.startsWith("Corrupted") ? "Corrupted Gauntlet" : "Gauntlet";
+			// personal best is the second capture, unless it is a new personal best, which only has one timestamp
+			String pb = matcher.group(2);
+			if (pb == null)
+			{
+				pb = matcher.group(1);
+			}
+
+			parsePb(boss, pb);
+		}
+
 		if (lastBossKill != null)
 		{
 			matcher = KILL_DURATION_PATTERN.matcher(message);
 			if (matcher.find())
 			{
-				matchPb(matcher);
+				parsePb(lastBossKill, matcher.group(1));
 			}
 
 			matcher = NEW_PB_PATTERN.matcher(message);
 			if (matcher.find())
 			{
-				matchPb(matcher);
+				parsePb(lastBossKill, matcher.group(1));
 			}
 		}
 
 		lastBossKill = null;
 	}
 
-	private void matchPb(Matcher matcher)
+	private void parsePb(String boss, String personalBest)
 	{
-		String personalBest = matcher.group(1);
 		String[] s = personalBest.split(":");
 		if (s.length == 2)
 		{
 			int seconds = Integer.parseInt(s[0]) * 60 + Integer.parseInt(s[1]);
-			log.debug("Got personal best for {}: {}", lastBossKill, seconds);
-			setPb(lastBossKill, seconds);
+			log.debug("Got personal best for {}: {}", boss, seconds);
+			setPb(boss, seconds);
 		}
 	}
 
