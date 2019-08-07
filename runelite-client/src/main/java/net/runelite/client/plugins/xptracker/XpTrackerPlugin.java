@@ -444,7 +444,6 @@ public class XpTrackerPlugin extends Plugin
 				long overallXp = client.getOverallExperience();
 				log.debug("Initializing XP tracker with {} overall exp", overallXp);
 				xpState.initializeSkill(Skill.OVERALL, overallXp);
-				xpPanel.updateTotal(xpState.getTotalSnapshot());
 			}
 		}
 
