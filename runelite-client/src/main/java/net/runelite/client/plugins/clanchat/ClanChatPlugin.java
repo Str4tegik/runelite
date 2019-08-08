@@ -88,6 +88,7 @@ import net.runelite.client.util.Text;
 public class ClanChatPlugin extends Plugin
 {
 	private static final int MAX_CHATS = 10;
+	private static final int MAX_NAME_LEN = 12;
 	private static final String CLAN_CHAT_TITLE = "CC";
 	private static final String RECENT_TITLE = "Recent CCs";
 	private static final int JOIN_LEAVE_DURATION = 20;
@@ -131,6 +132,13 @@ public class ClanChatPlugin extends Plugin
 	public void startUp()
 	{
 		chats = new ArrayList<>(Text.fromCSV(config.chatsData()));
+
+		// On disk data corruption can lead to very long chat data strings
+		boolean removed = chats.removeIf(str -> str.length() > MAX_NAME_LEN);
+		if (removed)
+		{
+			config.chatsData(Text.toCSV(chats));
+		}
 	}
 
 	@Override
@@ -578,7 +586,7 @@ public class ClanChatPlugin extends Plugin
 
 	private void updateRecentChat(String s)
 	{
-		if (Strings.isNullOrEmpty(s))
+		if (Strings.isNullOrEmpty(s) || s.length() > MAX_NAME_LEN)
 		{
 			return;
 		}
