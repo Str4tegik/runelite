@@ -373,7 +373,7 @@ public class MenuEntrySwapperPlugin extends Plugin
 
 		if (option.equals("talk-to"))
 		{
-			if (config.swapPickpocket() && target.contains("h.a.m."))
+			if (config.swapPickpocket() && NPC_MENU_TYPES.contains(MenuAction.of(event.getType())) && shouldSwapPickpocket(event))
 			{
 				swap("pickpocket", option, target, true);
 			}
@@ -594,6 +594,31 @@ public class MenuEntrySwapperPlugin extends Plugin
 		{
 			swap("use", option, target, true);
 		}
+	}
+
+	private boolean shouldSwapPickpocket(MenuEntryAdded event)
+	{
+		final int npcIndex = event.getIdentifier();
+		final NPC[] npcs = client.getCachedNPCs();
+
+		if (npcIndex < 0 || npcIndex >= npcs.length)
+		{
+			return false;
+		}
+
+		final NPC npc = npcs[npcIndex];
+		if (npc == null)
+		{
+			return false;
+		}
+
+		String name = npc.getName();
+		if (name.equals("Villager") || name.equals("Bandit"))
+		{
+			return false;
+		}
+
+		return true;
 	}
 
 	@Subscribe
