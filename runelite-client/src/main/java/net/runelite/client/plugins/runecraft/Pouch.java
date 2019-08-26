@@ -24,48 +24,39 @@
  */
 package net.runelite.client.plugins.runecraft;
 
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import net.runelite.api.ItemID;
 
-//@Data
 enum Pouch
 {
-	SMALL(0, ItemID.SMALL_POUCH, 3),
-	MEDIUM(1, ItemID.MEDIUM_POUCH, 6, ItemID.MEDIUM_POUCH_5511, 3),
-	LARGE(2, ItemID.LARGE_POUCH, 9, ItemID.LARGE_POUCH_5513, 7),
-	GIANT(3, ItemID.GIANT_POUCH, 12, ItemID.GIANT_POUCH_5515, 9);
+	SMALL(3),
+	MEDIUM(6, 3),
+	LARGE(9, 7),
+	GIANT(12, 9);
 
-//	private final int tier;
-
-//	private final int itemId;
 	private final int baseHoldAmount;
-//	private final int degradedItemId;
 	private final int degradedBaseHoldAmount;
 
-	@Getter
-	@Setter
+	@Getter(AccessLevel.PACKAGE)
+	@Setter(AccessLevel.PACKAGE)
 	private int holding;
-	@Getter
+	@Getter(AccessLevel.PACKAGE)
 	private boolean degraded;
-	boolean unknown = true;
+	@Getter(AccessLevel.PACKAGE)
+	@Setter(AccessLevel.PACKAGE)
+	private boolean unknown = true;
 
-	Pouch(int tier, int itemId, int holdAmount)
+	Pouch(int holdAmount)
 	{
-		this(tier, itemId, holdAmount, -1, -1);
+		this(holdAmount, -1);
 	}
 
-	Pouch(int tier, int itemId, int holdAmount, int degradedId, int degradedHoldAmount)
+	Pouch(int holdAmount, int degradedHoldAmount)
 	{
-//		this.tier = tier;
-//		this.itemId = itemId;
-//		this.holdAmount = holdAmount;
 		this.baseHoldAmount = holdAmount;
 		this.degradedBaseHoldAmount = degradedHoldAmount;
-//		this.degradedItemId = degradedId;
-
-//		this.holding = 0;
-//		this.degraded = false;
 	}
 
 	int getHoldAmount()

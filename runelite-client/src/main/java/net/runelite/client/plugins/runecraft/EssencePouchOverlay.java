@@ -64,7 +64,7 @@ public class EssencePouchOverlay extends WidgetItemOverlay
 		final TextComponent textComponent = new TextComponent();
 		textComponent.setPosition(new Point(bounds.x - 1, bounds.y + 8));
 		textComponent.setColor(Color.CYAN);
-		if (pouch.unknown)
+		if (pouch.isUnknown())
 		{
 			textComponent.setText("?");
 		}

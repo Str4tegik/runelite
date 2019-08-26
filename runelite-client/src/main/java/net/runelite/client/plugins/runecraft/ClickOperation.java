@@ -25,9 +25,8 @@
 package net.runelite.client.plugins.runecraft;
 
 import lombok.AllArgsConstructor;
-import lombok.Data;
 
-@Data
+//@Data
 @AllArgsConstructor
 class ClickOperation
 {

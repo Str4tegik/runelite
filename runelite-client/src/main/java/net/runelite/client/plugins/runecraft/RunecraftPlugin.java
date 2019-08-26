@@ -27,7 +27,9 @@ package net.runelite.client.plugins.runecraft;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Provides;
 import static java.lang.Math.min;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -71,7 +73,7 @@ public class RunecraftPlugin extends Plugin
 {
 	private static final String POUCH_DECAYED_NOTIFICATION_MESSAGE = "Your rune pouch has decayed.";
 	private static final String POUCH_DECAYED_MESSAGE = "Your pouch has decayed through use.";
-	private static final Pattern POUCH_CHECK_MESSAGE = Pattern.compile("^There (?:is|are) ([a-z]+)(?: pure)? essences? in this pouch.$");
+	private static final Pattern POUCH_CHECK_MESSAGE = Pattern.compile("^There (?:is|are) ([a-z]+)(?: pure)? essences? in this pouch\\.$");
 	private static final ImmutableMap<String, Integer> TEXT_TO_NUMBER = ImmutableMap.<String, Integer>builder()
 		.put("no", 0)
 		.put("one", 1)
@@ -88,19 +90,10 @@ public class RunecraftPlugin extends Plugin
 		.put("twelve", 12)
 		.build();
 
-//	private boolean loginFlag = true;
 	private final List<ClickOperation> clickedItems = new ArrayList<>();
-	private final List<ClickOperation> checkedPouches = new ArrayList<>();
+	private final Deque<ClickOperation> checkedPouches = new ArrayDeque<>();
 	private int lastEssence = 0;
 	private int lastSpace = 0;
-
-//	@Getter(AccessLevel.PACKAGE)
-//	private final ImmutableMap<Integer, Pouch> pouches = ImmutableMap.<Integer, Pouch>builder()
-//		.put(ItemID.SMALL_POUCH, Pouch.SMALL)
-//		.put(ItemID.MEDIUM_POUCH, Pouch.MEDIUM)
-//		.put(ItemID.LARGE_POUCH, Pouch.LARGE)
-//		.put(ItemID.GIANT_POUCH, Pouch.GIANT)
-//		.build();
 
 	@Getter(AccessLevel.PACKAGE)
 	private final Set<DecorativeObject> abyssObjects = new HashSet<>();
@@ -144,6 +137,11 @@ public class RunecraftPlugin extends Plugin
 		overlayManager.add(abyssOverlay);
 		overlayManager.add(essencePouchOverlay);
 		abyssOverlay.updateConfig();
+
+		for (Pouch pouch : Pouch.values())
+		{
+			pouch.setUnknown(true);
+		}
 	}
 
 	@Override
@@ -180,16 +178,16 @@ public class RunecraftPlugin extends Plugin
 				notifier.notify(POUCH_DECAYED_NOTIFICATION_MESSAGE);
 			}
 		}
-		if (checkedPouches.size() > 0)
+		if (!checkedPouches.isEmpty())
 		{
 			Matcher matcher = POUCH_CHECK_MESSAGE.matcher(event.getMessage());
 			if (matcher.matches())
 			{
 				final int num = TEXT_TO_NUMBER.get(matcher.group(1));
 				// Keep getting operations until we get a valid one
-				while (checkedPouches.size() > 0)
+				do
 				{
-					final ClickOperation op = checkedPouches.remove(0);
+					final ClickOperation op = checkedPouches.pop();
 					if (op.tick >= client.getTickCount())
 					{
 						Pouch pouch = op.pouch;
@@ -197,6 +195,7 @@ public class RunecraftPlugin extends Plugin
 						break;
 					}
 				}
+				while (!checkedPouches.isEmpty());
 			}
 		}
 	}
@@ -297,7 +296,7 @@ public class RunecraftPlugin extends Plugin
 
 			Pouch pouch = op.pouch;
 
-			if (pouch.unknown)
+			if (pouch.isUnknown())
 			{
 				if (op.delta > 0)
 				{
@@ -308,7 +307,7 @@ public class RunecraftPlugin extends Plugin
 					{
 						// Pouch now has a known amount
 						pouch.setHolding(holds);
-						pouch.unknown = false;
+						pouch.setUnknown(false);
 					}
 				}
 				else if (op.delta < 0)
@@ -319,7 +318,7 @@ public class RunecraftPlugin extends Plugin
 					if (space >= holds)
 					{
 						pouch.setHolding(0);
-						pouch.unknown = false;
+						pouch.setUnknown(false);
 					}
 				}
 
@@ -327,9 +326,9 @@ public class RunecraftPlugin extends Plugin
 				break;
 			}
 
-			final boolean fill = op.getDelta() > 0;
+			final boolean fill = op.delta > 0;
 			final int required = fill ? pouch.getRemaining() : pouch.getHolding();
-			final int essenceGot = op.getDelta() * min(required, fill ? essence : space);
+			final int essenceGot = op.delta * min(required, fill ? essence : space);
 
 			essence -= essenceGot;
 			space += essenceGot;
@@ -345,15 +344,27 @@ public class RunecraftPlugin extends Plugin
 	@Subscribe
 	public void onMenuOptionClicked(MenuOptionClicked event)
 	{
-		// XXX check the event
+		switch (event.getMenuAction())
+		{
+			case ITEM_FIRST_OPTION:
+			case ITEM_SECOND_OPTION:
+			case ITEM_THIRD_OPTION:
+			case ITEM_FOURTH_OPTION:
+			case ITEM_FIFTH_OPTION:
+			case GROUND_ITEM_THIRD_OPTION: // Take
+				break;
+			default:
+				return;
+		}
+
 		final int id = event.getId();
 		final Pouch pouch = Pouch.forItem(id);
-		final int tick = client.getTickCount() + 3;
 		if (pouch == null)
 		{
 			return;
 		}
 
+		final int tick = client.getTickCount() + 3;
 		switch (event.getMenuOption())
 		{
 			case "Fill":
@@ -366,6 +377,7 @@ public class RunecraftPlugin extends Plugin
 				checkedPouches.add(new ClickOperation(pouch, tick));
 				break;
 			case "Take":
+				// Dropping pouches clears them, so clear when picked up
 				pouch.setHolding(0);
 				break;
 		}
