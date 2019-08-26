@@ -69,18 +69,17 @@ class AbyssOverlay extends Overlay
 	private final Client client;
 	private final RunecraftPlugin plugin;
 	private final RunecraftConfig config;
+	private final ItemManager itemManager;
 
 	@Inject
-	private ItemManager itemManager;
-
-	@Inject
-	AbyssOverlay(Client client, RunecraftPlugin plugin, RunecraftConfig config)
+	AbyssOverlay(Client client, RunecraftPlugin plugin, RunecraftConfig config, ItemManager itemManager)
 	{
 		setPosition(OverlayPosition.DYNAMIC);
 		setLayer(OverlayLayer.ABOVE_WIDGETS);
 		this.client = client;
 		this.plugin = plugin;
 		this.config = config;
+		this.itemManager = itemManager;
 	}
 
 	@Override

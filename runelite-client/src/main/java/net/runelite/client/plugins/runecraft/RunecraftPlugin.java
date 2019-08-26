@@ -28,16 +28,15 @@ import com.google.common.collect.ImmutableMap;
 import com.google.inject.Provides;
 import static java.lang.Math.min;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.inject.Inject;
 import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.DecorativeObject;
@@ -68,8 +67,10 @@ import net.runelite.client.ui.overlay.OverlayManager;
 	description = "Show minimap icons and clickboxes for abyssal rifts",
 	tags = {"abyssal", "minimap", "overlay", "rifts", "rc", "runecrafting"}
 )
+@Slf4j
 public class RunecraftPlugin extends Plugin
 {
+	private static final int INVENTORY_SIZE = 28;
 	private static final String POUCH_DECAYED_NOTIFICATION_MESSAGE = "Your rune pouch has decayed.";
 	private static final String POUCH_DECAYED_MESSAGE = "Your pouch has decayed through use.";
 	private static final Pattern POUCH_CHECK_MESSAGE = Pattern.compile("^There (?:is|are) ([a-z]+)(?: pure)? essences? in this pouch\\.$");
@@ -89,10 +90,10 @@ public class RunecraftPlugin extends Plugin
 		.put("twelve", 12)
 		.build();
 
-	private final List<ClickOperation> clickedItems = new ArrayList<>();
+	private final Deque<ClickOperation> clickedItems = new ArrayDeque<>();
 	private final Deque<ClickOperation> checkedPouches = new ArrayDeque<>();
-	private int lastEssence = 0;
-	private int lastSpace = 0;
+	private int lastEssence;
+	private int lastSpace;
 
 	@Getter(AccessLevel.PACKAGE)
 	private final Set<DecorativeObject> abyssObjects = new HashSet<>();
@@ -138,6 +139,8 @@ public class RunecraftPlugin extends Plugin
 			pouch.setUnknown(true);
 			pouch.degrade(false);
 		}
+
+		lastEssence = lastSpace = -1;
 	}
 
 	@Override
@@ -271,6 +274,10 @@ public class RunecraftPlugin extends Plugin
 					break;
 			}
 		}
+		if (items.length < INVENTORY_SIZE)
+		{
+			newSpace += INVENTORY_SIZE - items.length;
+		}
 
 		if (clickedItems.isEmpty())
 		{
@@ -279,13 +286,27 @@ public class RunecraftPlugin extends Plugin
 			return;
 		}
 
+		if (lastEssence == -1 || lastSpace == -1)
+		{
+			lastSpace = newSpace;
+			lastEssence = newEss;
+			clickedItems.clear();
+			return;
+		}
+
 		final int tick = client.getTickCount();
 
 		int essence = lastEssence;
 		int space = lastSpace;
 
-		for (ClickOperation op : clickedItems)
+		log.debug("Begin processing {} events, last ess: {} space: {}, cur ess {}: space {}", clickedItems.size(), lastEssence, lastSpace, newEss, newSpace);
+
+		while (essence != newEss)
 		{
+			ClickOperation op = clickedItems.poll();
+			if (op == null)
+				break;
+
 			if (tick > op.tick)
 			{
 				continue;
@@ -306,12 +327,16 @@ public class RunecraftPlugin extends Plugin
 				pouch.setUnknown(false);
 			}
 
+			log.debug("{}: {}", pouch.name(), essenceGot);
+
 			essence -= essenceGot;
 			space += essenceGot;
 
 			pouch.addHolding(essenceGot);
 		}
-		clickedItems.clear();
+
+		log.debug("End processing with {} events left", clickedItems.size());
+//		clickedItems.clear();
 
 		lastSpace = newSpace;
 		lastEssence = newEss;
