@@ -31,17 +31,12 @@ import lombok.Data;
 @AllArgsConstructor
 class ClickOperation
 {
-	/**
-	 * The ItemId that was clicked on.
-	 * Degraded pouches are converted before-hand
-	 * Can be any non-degraded pouch, pure essence, else -1
-	 */
-	int itemId;
+	Pouch pouch;
 	int tick;
 	int delta;
 
-	ClickOperation(int itemId, int tick)
+	ClickOperation(Pouch pouch, int tick)
 	{
-		this(itemId, tick, 0);
+		this(pouch, tick, 0);
 	}
 }

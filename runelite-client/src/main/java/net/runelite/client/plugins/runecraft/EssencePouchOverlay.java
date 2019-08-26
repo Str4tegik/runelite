@@ -64,13 +64,13 @@ public class EssencePouchOverlay extends WidgetItemOverlay
 		final TextComponent textComponent = new TextComponent();
 		textComponent.setPosition(new Point(bounds.x - 1, bounds.y + 8));
 		textComponent.setColor(Color.CYAN);
-		if (pouch.getHolding() == 15)///?
+		if (pouch.unknown)
 		{
 			textComponent.setText("?");
 		}
 		else
 		{
-			textComponent.setText(pouch.getHolding() + (pouch.isDegraded() ? "?" : ""));
+			textComponent.setText(Integer.toString(pouch.getHolding()));
 		}
 		textComponent.render(graphics);
 	}

@@ -192,9 +192,8 @@ public class RunecraftPlugin extends Plugin
 					final ClickOperation op = checkedPouches.remove(0);
 					if (op.tick >= client.getTickCount())
 					{
-						Pouch pouch = Pouch.forItem(op.itemId);
+						Pouch pouch = op.pouch;
 						pouch.setHolding(num);
-//						updatePouchContents(pouch.getTier(), num);
 						break;
 					}
 				}
@@ -232,18 +231,7 @@ public class RunecraftPlugin extends Plugin
 			case HOPPING:
 			case LOGIN_SCREEN:
 				darkMage = null;
-//				loginFlag = true;
 				break;
-//			case LOGGED_IN:
-//				if (loginFlag)
-//				{
-//					loginFlag = false;
-//					for (Pouch pouch : pouches.values())
-//					{
-////						pouch.setHolding(getPouchContents(pouch.getTier()));
-//					}
-//				}
-//				break;
 		}
 	}
 
@@ -306,48 +294,32 @@ public class RunecraftPlugin extends Plugin
 			{
 				continue;
 			}
-//			if (op.getItemId() == -1)
-//			{
-//				space -= op.delta;
-//				space = Math.max(0, space);
-//				continue;
-//			}
-//			if (op.getItemId() == ItemID.PURE_ESSENCE)
-//			{
-//				// Ensure that the essence can be added
-//				space -= op.delta;
-//				if (space < 0)
-//				{
-//					essence += op.delta + space;
-//					space = 0;
-//				}
-//				else
-//				{
-//					essence += op.delta;
-//				}
-//				continue;
-//			}
 
-			Pouch pouch = Pouch.forItem(op.getItemId());
+			Pouch pouch = op.pouch;
 
-			if (pouch.unknown) {
-				if (op.delta >0) {
+			if (pouch.unknown)
+			{
+				if (op.delta > 0)
+				{
 					int holds = pouch.getHoldAmount();
 
 					// We know that this will always fill up the pouch
-					if (essence >= holds) {
+					if (essence >= holds)
+					{
 						// Pouch now has a known amount
 						pouch.setHolding(holds);
-						pouch.unknown  = false;
-						//essence -= holds;
+						pouch.unknown = false;
 					}
-				} else if (op.delta < 0) {
+				}
+				else if (op.delta < 0)
+				{
 					int holds = pouch.getHoldAmount();
 
 					// We know the pouch will always completely empty
-					if (space >= holds) {
+					if (space >= holds)
+					{
 						pouch.setHolding(0);
-						pouch.unknown  = false;
+						pouch.unknown = false;
 					}
 				}
 
@@ -363,7 +335,6 @@ public class RunecraftPlugin extends Plugin
 			space += essenceGot;
 
 			pouch.addHolding(essenceGot);
-		//	updatePouchContents(pouch.getTier(), pouch.getHolding());
 		}
 		clickedItems.clear();
 
@@ -380,38 +351,19 @@ public class RunecraftPlugin extends Plugin
 		final int tick = client.getTickCount() + 3;
 		if (pouch == null)
 		{
-//			if (id == ItemID.PURE_ESSENCE)
-//			{
-//				if (event.getMenuOption().equals("Drop"))
-//				{
-//					clickedItems.add(new ClickOperation(ItemID.PURE_ESSENCE, tick, -1));
-//				}
-//				else if (event.getMenuOption().equals("Take"))
-//				{
-//					clickedItems.add(new ClickOperation(ItemID.PURE_ESSENCE, tick, 1));
-//				}
-//			}
-//			else if (event.getMenuOption().equals("Drop"))
-//			{
-//				clickedItems.add(new ClickOperation(-1, tick, -1));
-//			}
-//			else if (event.getMenuOption().equals("Take"))
-//			{
-//				clickedItems.add(new ClickOperation(-1, tick, 1));
-//			}
 			return;
 		}
 
 		switch (event.getMenuOption())
 		{
 			case "Fill":
-				clickedItems.add(new ClickOperation(id, tick, 1));
+				clickedItems.add(new ClickOperation(pouch, tick, 1));
 				break;
 			case "Empty":
-				clickedItems.add(new ClickOperation(id, tick, -1));
+				clickedItems.add(new ClickOperation(pouch, tick, -1));
 				break;
 			case "Check":
-				checkedPouches.add(new ClickOperation(id, tick));
+				checkedPouches.add(new ClickOperation(pouch, tick));
 				break;
 			case "Take":
 				pouch.setHolding(0);
@@ -438,52 +390,4 @@ public class RunecraftPlugin extends Plugin
 			darkMage = null;
 		}
 	}
-
-//	/**
-//	 * Updates a pouch's contents in the config.
-//	 * Values are bitpacked, since they each fit into 4 bits.
-//	 * A value of 15 represents unknown
-//	 * @param tier of the pouch
-//	 * @param value to update with
-//	 */
-//	private void updatePouchContents(int tier, int value)
-//	{
-//		int current = config.pouchState();
-//		final int offset = tier * 4;
-//		final int mask = ~(15 << offset);
-//		current = (current & mask) | (value << offset);
-//		config.pouchState(current);
-//	}
-//
-//	/**
-//	 * Get a pouch's value from the bitpacked config value
-//	 * See {@link RunecraftPlugin#updatePouchContents(int, int)} for more information
-//	 * @param tier
-//	 * @return the pouch's contents
-//	 */
-//	private int getPouchContents(int tier)
-//	{
-//		final int offset = tier * 4;
-//		return (config.pouchState() & (15 << offset)) >> offset;
-//	}
-
-//	/**
-//	 * Convert degraded pouch IDs into their repaired counterparts
-//	 * @param itemId
-//	 * @return repaired pouch id if degraded, otherwise itemId
-//	 */
-//	static int getPouchID(int itemId)
-//	{
-//		switch (itemId)
-//		{
-//			case ItemID.MEDIUM_POUCH_5511:
-//				return ItemID.MEDIUM_POUCH;
-//			case ItemID.LARGE_POUCH_5513:
-//				return ItemID.LARGE_POUCH;
-//			case ItemID.GIANT_POUCH_5515:
-//				return ItemID.GIANT_POUCH;
-//			default:
-//				return itemId;
-//		}
-//	}
 }
