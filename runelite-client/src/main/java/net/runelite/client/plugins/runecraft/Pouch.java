@@ -40,6 +40,15 @@ class Pouch
 	private final int degradedBaseHoldAmount;
 
 	private int holding;
+	boolean unknown = true;
+
+	/*
+			.put(ItemID.SMALL_POUCH, new Pouch(0, ItemID.SMALL_POUCH, 3))
+		.put(ItemID.MEDIUM_POUCH, new Pouch(1, ItemID.MEDIUM_POUCH, 6, ItemID.MEDIUM_POUCH_5511, 3))
+		.put(ItemID.LARGE_POUCH, new Pouch(2, ItemID.LARGE_POUCH, 9, ItemID.LARGE_POUCH_5513, 7))
+		.put(ItemID.GIANT_POUCH, new Pouch(3, ItemID.GIANT_POUCH, 12, ItemID.GIANT_POUCH_5515, 9))
+		.build();
+	 */
 
 	Pouch(int tier, int itemId, int holdAmount)
 	{

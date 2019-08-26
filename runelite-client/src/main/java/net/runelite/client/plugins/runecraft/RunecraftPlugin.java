@@ -26,6 +26,7 @@ package net.runelite.client.plugins.runecraft;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Provides;
+import static java.lang.Math.min;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -237,13 +238,10 @@ public class RunecraftPlugin extends Plugin
 				if (loginFlag)
 				{
 					loginFlag = false;
-					clientThread.invoke(() ->
+					for (Pouch pouch : pouches.values())
 					{
-						for (Pouch pouch : pouches.values())
-						{
-							pouch.setHolding(getPouchContents(pouch.getTier()));
-						}
-					});
+						pouch.setHolding(getPouchContents(pouch.getTier()));
+					}
 				}
 				break;
 		}
@@ -252,7 +250,7 @@ public class RunecraftPlugin extends Plugin
 	@Subscribe
 	public void onItemContainerChanged(ItemContainerChanged event)
 	{
-		if (event.getItemContainer() != client.getItemContainer(InventoryID.INVENTORY))
+		if (InventoryID.INVENTORY.getId() != event.getContainerId())
 		{
 			return;
 		}
@@ -326,13 +324,39 @@ public class RunecraftPlugin extends Plugin
 
 			Pouch pouch = pouches.get(op.getItemId());
 
+			if (pouch.unknown) {
+				if (op.delta >0) {
+					int holds = pouch.getHoldAmount();
+
+					// We know that this will always fill up the pouch
+					if (essence >= holds) {
+						// Pouch now has a known amount
+						pouch.setHolding(holds);
+						pouch.unknown  = false;
+						//essence -= holds;
+					}
+				} else if (op.delta < 0) {
+					int holds = pouch.getHoldAmount();
+
+					// We know the pouch will always completely empty
+					if (space >= holds) {
+						pouch.setHolding(0);
+						pouch.unknown  = false;
+					}
+				}
+
+				// Can't tell what would happen next, so ignore it
+				break;
+			}
+
 			final boolean fill = op.getDelta() > 0;
 			final int required = fill ? pouch.getRemaining() : pouch.getHolding();
-			final int essenceGot = op.getDelta() * Math.min(required, fill ? essence : space);
+			final int essenceGot = op.getDelta() * min(required, fill ? essence : space);
 
 			essence -= essenceGot;
-			pouch.addHolding(essenceGot);
 			space += essenceGot;
+
+			pouch.addHolding(essenceGot);
 			updatePouchContents(pouch.getTier(), pouch.getHolding());
 		}
 		clickedItems.clear();
@@ -344,6 +368,7 @@ public class RunecraftPlugin extends Plugin
 	@Subscribe
 	public void onMenuOptionClicked(MenuOptionClicked event)
 	{
+		// XXX check the event
 		final int id = getPouchID(event.getId());
 		final Pouch pouch = pouches.get(id);
 		final int tick = client.getTickCount() + 3;
