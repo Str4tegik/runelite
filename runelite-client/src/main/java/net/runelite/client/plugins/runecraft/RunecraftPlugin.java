@@ -276,6 +276,7 @@ public class RunecraftPlugin extends Plugin
 		}
 		if (items.length < INVENTORY_SIZE)
 		{
+			// Pad newSpace for unallocated inventory slots
 			newSpace += INVENTORY_SIZE - items.length;
 		}
 
@@ -305,10 +306,14 @@ public class RunecraftPlugin extends Plugin
 		{
 			ClickOperation op = clickedItems.poll();
 			if (op == null)
+			{
+				log.debug("Ran out of updates while trying to balance essence!");
 				break;
+			}
 
 			if (tick > op.tick)
 			{
+				log.debug("Click op timed out");
 				continue;
 			}
 
@@ -335,8 +340,10 @@ public class RunecraftPlugin extends Plugin
 			pouch.addHolding(essenceGot);
 		}
 
-		log.debug("End processing with {} events left", clickedItems.size());
-//		clickedItems.clear();
+		if (!clickedItems.isEmpty())
+		{
+			log.debug("End processing with {} events left", clickedItems.size());
+		}
 
 		lastSpace = newSpace;
 		lastEssence = newEss;
