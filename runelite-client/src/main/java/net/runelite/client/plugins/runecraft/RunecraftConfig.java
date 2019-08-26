@@ -230,21 +230,21 @@ public interface RunecraftConfig extends Config
 		return true;
 	}
 
-	@ConfigItem(
-		keyName = "pouchState",
-		name = "",
-		description = "",
-		hidden = true
-	)
-	default int pouchState()
-	{
-		return 65535;
-	}
-
-	@ConfigItem(
-		keyName = "pouchState",
-		name = "",
-		description = ""
-	)
-	void pouchState(int value);
+//	@ConfigItem(
+//		keyName = "pouchState",
+//		name = "",
+//		description = "",
+//		hidden = true
+//	)
+//	default int pouchState()
+//	{
+//		return 65535;
+//	}
+//
+//	@ConfigItem(
+//		keyName = "pouchState",
+//		name = "",
+//		description = ""
+//	)
+//	void pouchState(int value);
 }

@@ -54,7 +54,7 @@ public class EssencePouchOverlay extends WidgetItemOverlay
 			return;
 		}
 
-		final Pouch pouch = plugin.getPouches().get(RunecraftPlugin.getPouchID(itemId));
+		final Pouch pouch = Pouch.forItem(itemId);
 		if (pouch == null)
 		{
 			return;
@@ -64,7 +64,7 @@ public class EssencePouchOverlay extends WidgetItemOverlay
 		final TextComponent textComponent = new TextComponent();
 		textComponent.setPosition(new Point(bounds.x - 1, bounds.y + 8));
 		textComponent.setColor(Color.CYAN);
-		if (pouch.getHolding() == 15)
+		if (pouch.getHolding() == 15)///?
 		{
 			textComponent.setText("?");
 		}

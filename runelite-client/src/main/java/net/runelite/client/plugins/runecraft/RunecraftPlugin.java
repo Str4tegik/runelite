@@ -88,19 +88,19 @@ public class RunecraftPlugin extends Plugin
 		.put("twelve", 12)
 		.build();
 
-	private boolean loginFlag = true;
+//	private boolean loginFlag = true;
 	private final List<ClickOperation> clickedItems = new ArrayList<>();
 	private final List<ClickOperation> checkedPouches = new ArrayList<>();
 	private int lastEssence = 0;
 	private int lastSpace = 0;
 
-	@Getter(AccessLevel.PACKAGE)
-	private final ImmutableMap<Integer, Pouch> pouches = ImmutableMap.<Integer, Pouch>builder()
-		.put(ItemID.SMALL_POUCH, new Pouch(0, ItemID.SMALL_POUCH, 3))
-		.put(ItemID.MEDIUM_POUCH, new Pouch(1, ItemID.MEDIUM_POUCH, 6, ItemID.MEDIUM_POUCH_5511, 3))
-		.put(ItemID.LARGE_POUCH, new Pouch(2, ItemID.LARGE_POUCH, 9, ItemID.LARGE_POUCH_5513, 7))
-		.put(ItemID.GIANT_POUCH, new Pouch(3, ItemID.GIANT_POUCH, 12, ItemID.GIANT_POUCH_5515, 9))
-		.build();
+//	@Getter(AccessLevel.PACKAGE)
+//	private final ImmutableMap<Integer, Pouch> pouches = ImmutableMap.<Integer, Pouch>builder()
+//		.put(ItemID.SMALL_POUCH, Pouch.SMALL)
+//		.put(ItemID.MEDIUM_POUCH, Pouch.MEDIUM)
+//		.put(ItemID.LARGE_POUCH, Pouch.LARGE)
+//		.put(ItemID.GIANT_POUCH, Pouch.GIANT)
+//		.build();
 
 	@Getter(AccessLevel.PACKAGE)
 	private final Set<DecorativeObject> abyssObjects = new HashSet<>();
@@ -170,7 +170,7 @@ public class RunecraftPlugin extends Plugin
 	{
 		if (event.getType() != ChatMessageType.GAMEMESSAGE)
 		{
-			return;
+ 			return;
 		}
 
 		if (config.degradingNotification())
@@ -192,9 +192,9 @@ public class RunecraftPlugin extends Plugin
 					final ClickOperation op = checkedPouches.remove(0);
 					if (op.tick >= client.getTickCount())
 					{
-						Pouch pouch = pouches.get(op.itemId);
+						Pouch pouch = Pouch.forItem(op.itemId);
 						pouch.setHolding(num);
-						updatePouchContents(pouch.getTier(), num);
+//						updatePouchContents(pouch.getTier(), num);
 						break;
 					}
 				}
@@ -232,18 +232,18 @@ public class RunecraftPlugin extends Plugin
 			case HOPPING:
 			case LOGIN_SCREEN:
 				darkMage = null;
-				loginFlag = true;
+//				loginFlag = true;
 				break;
-			case LOGGED_IN:
-				if (loginFlag)
-				{
-					loginFlag = false;
-					for (Pouch pouch : pouches.values())
-					{
-						pouch.setHolding(getPouchContents(pouch.getTier()));
-					}
-				}
-				break;
+//			case LOGGED_IN:
+//				if (loginFlag)
+//				{
+//					loginFlag = false;
+//					for (Pouch pouch : pouches.values())
+//					{
+////						pouch.setHolding(getPouchContents(pouch.getTier()));
+//					}
+//				}
+//				break;
 		}
 	}
 
@@ -259,9 +259,9 @@ public class RunecraftPlugin extends Plugin
 
 		int newEss = 0;
 		int newSpace = 0;
-		Pouch medium = pouches.get(ItemID.MEDIUM_POUCH);
-		Pouch large = pouches.get(ItemID.LARGE_POUCH);
-		Pouch giant = pouches.get(ItemID.GIANT_POUCH);
+		Pouch medium = Pouch.MEDIUM;
+		Pouch large = Pouch.LARGE;
+		Pouch giant = Pouch.GIANT;
 
 		for (Item item : items)
 		{
@@ -274,16 +274,22 @@ public class RunecraftPlugin extends Plugin
 					newSpace += 1;
 					break;
 				case ItemID.MEDIUM_POUCH:
+					medium.degrade(false);
+					break;
 				case ItemID.MEDIUM_POUCH_5511:
-					medium.shouldDegradeStateChange(item.getId());
+					medium.degrade(true);
 					break;
 				case ItemID.LARGE_POUCH:
+					large.degrade(false);
+					break;
 				case ItemID.LARGE_POUCH_5513:
-					large.shouldDegradeStateChange(item.getId());
+					large.degrade(true);
 					break;
 				case ItemID.GIANT_POUCH:
+					giant.degrade(false);
+					break;
 				case ItemID.GIANT_POUCH_5515:
-					giant.shouldDegradeStateChange(item.getId());
+					giant.degrade(true);
 					break;
 			}
 		}
@@ -300,29 +306,29 @@ public class RunecraftPlugin extends Plugin
 			{
 				continue;
 			}
-			if (op.getItemId() == -1)
-			{
-				space -= op.delta;
-				space = Math.max(0, space);
-				continue;
-			}
-			if (op.getItemId() == ItemID.PURE_ESSENCE)
-			{
-				// Ensure that the essence can be added
-				space -= op.delta;
-				if (space < 0)
-				{
-					essence += op.delta + space;
-					space = 0;
-				}
-				else
-				{
-					essence += op.delta;
-				}
-				continue;
-			}
+//			if (op.getItemId() == -1)
+//			{
+//				space -= op.delta;
+//				space = Math.max(0, space);
+//				continue;
+//			}
+//			if (op.getItemId() == ItemID.PURE_ESSENCE)
+//			{
+//				// Ensure that the essence can be added
+//				space -= op.delta;
+//				if (space < 0)
+//				{
+//					essence += op.delta + space;
+//					space = 0;
+//				}
+//				else
+//				{
+//					essence += op.delta;
+//				}
+//				continue;
+//			}
 
-			Pouch pouch = pouches.get(op.getItemId());
+			Pouch pouch = Pouch.forItem(op.getItemId());
 
 			if (pouch.unknown) {
 				if (op.delta >0) {
@@ -357,7 +363,7 @@ public class RunecraftPlugin extends Plugin
 			space += essenceGot;
 
 			pouch.addHolding(essenceGot);
-			updatePouchContents(pouch.getTier(), pouch.getHolding());
+		//	updatePouchContents(pouch.getTier(), pouch.getHolding());
 		}
 		clickedItems.clear();
 
@@ -369,30 +375,30 @@ public class RunecraftPlugin extends Plugin
 	public void onMenuOptionClicked(MenuOptionClicked event)
 	{
 		// XXX check the event
-		final int id = getPouchID(event.getId());
-		final Pouch pouch = pouches.get(id);
+		final int id = event.getId();
+		final Pouch pouch = Pouch.forItem(id);
 		final int tick = client.getTickCount() + 3;
 		if (pouch == null)
 		{
-			if (id == ItemID.PURE_ESSENCE)
-			{
-				if (event.getMenuOption().equals("Drop"))
-				{
-					clickedItems.add(new ClickOperation(ItemID.PURE_ESSENCE, tick, -1));
-				}
-				else if (event.getMenuOption().equals("Take"))
-				{
-					clickedItems.add(new ClickOperation(ItemID.PURE_ESSENCE, tick, 1));
-				}
-			}
-			else if (event.getMenuOption().equals("Drop"))
-			{
-				clickedItems.add(new ClickOperation(-1, tick, -1));
-			}
-			else if (event.getMenuOption().equals("Take"))
-			{
-				clickedItems.add(new ClickOperation(-1, tick, 1));
-			}
+//			if (id == ItemID.PURE_ESSENCE)
+//			{
+//				if (event.getMenuOption().equals("Drop"))
+//				{
+//					clickedItems.add(new ClickOperation(ItemID.PURE_ESSENCE, tick, -1));
+//				}
+//				else if (event.getMenuOption().equals("Take"))
+//				{
+//					clickedItems.add(new ClickOperation(ItemID.PURE_ESSENCE, tick, 1));
+//				}
+//			}
+//			else if (event.getMenuOption().equals("Drop"))
+//			{
+//				clickedItems.add(new ClickOperation(-1, tick, -1));
+//			}
+//			else if (event.getMenuOption().equals("Take"))
+//			{
+//				clickedItems.add(new ClickOperation(-1, tick, 1));
+//			}
 			return;
 		}
 
@@ -433,51 +439,51 @@ public class RunecraftPlugin extends Plugin
 		}
 	}
 
-	/**
-	 * Updates a pouch's contents in the config.
-	 * Values are bitpacked, since they each fit into 4 bits.
-	 * A value of 15 represents unknown
-	 * @param tier of the pouch
-	 * @param value to update with
-	 */
-	private void updatePouchContents(int tier, int value)
-	{
-		int current = config.pouchState();
-		final int offset = tier * 4;
-		final int mask = ~(15 << offset);
-		current = (current & mask) | (value << offset);
-		config.pouchState(current);
-	}
+//	/**
+//	 * Updates a pouch's contents in the config.
+//	 * Values are bitpacked, since they each fit into 4 bits.
+//	 * A value of 15 represents unknown
+//	 * @param tier of the pouch
+//	 * @param value to update with
+//	 */
+//	private void updatePouchContents(int tier, int value)
+//	{
+//		int current = config.pouchState();
+//		final int offset = tier * 4;
+//		final int mask = ~(15 << offset);
+//		current = (current & mask) | (value << offset);
+//		config.pouchState(current);
+//	}
+//
+//	/**
+//	 * Get a pouch's value from the bitpacked config value
+//	 * See {@link RunecraftPlugin#updatePouchContents(int, int)} for more information
+//	 * @param tier
+//	 * @return the pouch's contents
+//	 */
+//	private int getPouchContents(int tier)
+//	{
+//		final int offset = tier * 4;
+//		return (config.pouchState() & (15 << offset)) >> offset;
+//	}
 
-	/**
-	 * Get a pouch's value from the bitpacked config value
-	 * See {@link RunecraftPlugin#updatePouchContents(int, int)} for more information
-	 * @param tier
-	 * @return the pouch's contents
-	 */
-	private int getPouchContents(int tier)
-	{
-		final int offset = tier * 4;
-		return (config.pouchState() & (15 << offset)) >> offset;
-	}
-
-	/**
-	 * Convert degraded pouch IDs into their repaired counterparts
-	 * @param itemId
-	 * @return repaired pouch id if degraded, otherwise itemId
-	 */
-	static int getPouchID(int itemId)
-	{
-		switch (itemId)
-		{
-			case ItemID.MEDIUM_POUCH_5511:
-				return ItemID.MEDIUM_POUCH;
-			case ItemID.LARGE_POUCH_5513:
-				return ItemID.LARGE_POUCH;
-			case ItemID.GIANT_POUCH_5515:
-				return ItemID.GIANT_POUCH;
-			default:
-				return itemId;
-		}
-	}
+//	/**
+//	 * Convert degraded pouch IDs into their repaired counterparts
+//	 * @param itemId
+//	 * @return repaired pouch id if degraded, otherwise itemId
+//	 */
+//	static int getPouchID(int itemId)
+//	{
+//		switch (itemId)
+//		{
+//			case ItemID.MEDIUM_POUCH_5511:
+//				return ItemID.MEDIUM_POUCH;
+//			case ItemID.LARGE_POUCH_5513:
+//				return ItemID.LARGE_POUCH;
+//			case ItemID.GIANT_POUCH_5515:
+//				return ItemID.GIANT_POUCH;
+//			default:
+//				return itemId;
+//		}
+//	}
 }

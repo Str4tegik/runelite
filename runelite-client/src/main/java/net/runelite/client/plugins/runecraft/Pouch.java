@@ -24,31 +24,31 @@
  */
 package net.runelite.client.plugins.runecraft;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
+import net.runelite.api.ItemID;
 
-@Data
-class Pouch
+//@Data
+enum Pouch
 {
-	private final int tier;
+	SMALL(0, ItemID.SMALL_POUCH, 3),
+	MEDIUM(1, ItemID.MEDIUM_POUCH, 6, ItemID.MEDIUM_POUCH_5511, 3),
+	LARGE(2, ItemID.LARGE_POUCH, 9, ItemID.LARGE_POUCH_5513, 7),
+	GIANT(3, ItemID.GIANT_POUCH, 12, ItemID.GIANT_POUCH_5515, 9);
 
-	private final int itemId;
-	private int holdAmount;
+//	private final int tier;
+
+//	private final int itemId;
 	private final int baseHoldAmount;
-
-	private boolean degraded;
-	private final int degradedItemId;
+//	private final int degradedItemId;
 	private final int degradedBaseHoldAmount;
 
+	@Getter
+	@Setter
 	private int holding;
+	@Getter
+	private boolean degraded;
 	boolean unknown = true;
-
-	/*
-			.put(ItemID.SMALL_POUCH, new Pouch(0, ItemID.SMALL_POUCH, 3))
-		.put(ItemID.MEDIUM_POUCH, new Pouch(1, ItemID.MEDIUM_POUCH, 6, ItemID.MEDIUM_POUCH_5511, 3))
-		.put(ItemID.LARGE_POUCH, new Pouch(2, ItemID.LARGE_POUCH, 9, ItemID.LARGE_POUCH_5513, 7))
-		.put(ItemID.GIANT_POUCH, new Pouch(3, ItemID.GIANT_POUCH, 12, ItemID.GIANT_POUCH_5515, 9))
-		.build();
-	 */
 
 	Pouch(int tier, int itemId, int holdAmount)
 	{
@@ -57,25 +57,33 @@ class Pouch
 
 	Pouch(int tier, int itemId, int holdAmount, int degradedId, int degradedHoldAmount)
 	{
-		this.tier = tier;
-		this.itemId = itemId;
-		this.holdAmount = holdAmount;
+//		this.tier = tier;
+//		this.itemId = itemId;
+//		this.holdAmount = holdAmount;
 		this.baseHoldAmount = holdAmount;
 		this.degradedBaseHoldAmount = degradedHoldAmount;
-		this.degradedItemId = degradedId;
+//		this.degradedItemId = degradedId;
 
-		this.holding = 0;
-		this.degraded = false;
+//		this.holding = 0;
+//		this.degraded = false;
+	}
+
+	int getHoldAmount()
+	{
+		return degraded ? degradedBaseHoldAmount : baseHoldAmount;
 	}
 
 	int getRemaining()
 	{
+		final int holdAmount = degraded ? degradedBaseHoldAmount : baseHoldAmount;
 		return holdAmount - holding;
 	}
 
 	void addHolding(int delta)
 	{
 		holding += delta;
+
+		final int holdAmount = degraded ? degradedBaseHoldAmount : baseHoldAmount;
 		if (holding < 0)
 		{
 			holding = 0;
@@ -86,14 +94,33 @@ class Pouch
 		}
 	}
 
-	void shouldDegradeStateChange(int itemId)
+	void degrade(boolean state)
 	{
-		final boolean state = itemId == degradedItemId;
 		if (state != degraded)
 		{
 			degraded = state;
-			holdAmount = state ? degradedBaseHoldAmount : baseHoldAmount;
+			final int holdAmount = degraded ? degradedBaseHoldAmount : baseHoldAmount;
 			holding = Math.min(holding, holdAmount);
+		}
+	}
+
+	static Pouch forItem(int itemId)
+	{
+		switch (itemId)
+		{
+			case ItemID.SMALL_POUCH:
+				return SMALL;
+			case ItemID.MEDIUM_POUCH:
+			case ItemID.MEDIUM_POUCH_5511:
+				return MEDIUM;
+			case ItemID.LARGE_POUCH:
+			case ItemID.LARGE_POUCH_5513:
+				return LARGE;
+			case ItemID.GIANT_POUCH:
+			case ItemID.GIANT_POUCH_5515:
+				return GIANT;
+			default:
+				return null;
 		}
 	}
 }
