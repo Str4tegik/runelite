@@ -57,7 +57,6 @@ import net.runelite.api.events.MenuOptionClicked;
 import net.runelite.api.events.NpcDespawned;
 import net.runelite.api.events.NpcSpawned;
 import net.runelite.client.Notifier;
-import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.Plugin;
@@ -103,9 +102,6 @@ public class RunecraftPlugin extends Plugin
 
 	@Inject
 	private Client client;
-
-	@Inject
-	private ClientThread clientThread;
 
 	@Inject
 	private OverlayManager overlayManager;
@@ -167,7 +163,7 @@ public class RunecraftPlugin extends Plugin
 	{
 		if (event.getType() != ChatMessageType.GAMEMESSAGE)
 		{
- 			return;
+			return;
 		}
 
 		if (config.degradingNotification())
