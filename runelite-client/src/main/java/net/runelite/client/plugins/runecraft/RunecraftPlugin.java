@@ -192,6 +192,7 @@ public class RunecraftPlugin extends Plugin
 					{
 						Pouch pouch = op.pouch;
 						pouch.setHolding(num);
+						pouch.setUnknown(false);
 						break;
 					}
 				}
