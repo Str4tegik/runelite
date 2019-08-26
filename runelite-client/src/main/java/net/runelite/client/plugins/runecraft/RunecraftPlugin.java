@@ -252,6 +252,7 @@ public class RunecraftPlugin extends Plugin
 		Pouch large = Pouch.LARGE;
 		Pouch giant = Pouch.GIANT;
 
+		// Count ess/space, and change pouch states
 		for (Item item : items)
 		{
 			switch (item.getId())
@@ -299,7 +300,9 @@ public class RunecraftPlugin extends Plugin
 			Pouch pouch = op.pouch;
 
 			final boolean fill = op.delta > 0;
+			// How much ess can either be deposited or withdrawn
 			final int required = fill ? pouch.getRemaining() : pouch.getHolding();
+			// Bound to how much ess or free space we actually have, and optionally negate
 			final int essenceGot = op.delta * min(required, fill ? essence : space);
 
 			// if we have enough essence or space to fill or empty the entire pouch, it no
