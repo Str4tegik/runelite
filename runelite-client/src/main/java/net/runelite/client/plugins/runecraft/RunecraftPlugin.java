@@ -99,9 +99,6 @@ public class RunecraftPlugin extends Plugin
 	private final Set<DecorativeObject> abyssObjects = new HashSet<>();
 
 	@Getter(AccessLevel.PACKAGE)
-	private boolean degradedPouchInInventory;
-
-	@Getter(AccessLevel.PACKAGE)
 	private NPC darkMage;
 
 	@Inject
@@ -138,10 +135,12 @@ public class RunecraftPlugin extends Plugin
 		overlayManager.add(essencePouchOverlay);
 		abyssOverlay.updateConfig();
 
+		// Reset pouch state
 		for (Pouch pouch : Pouch.values())
 		{
 			pouch.setHolding(0);
 			pouch.setUnknown(true);
+			pouch.degrade(false);
 		}
 	}
 
@@ -152,7 +151,6 @@ public class RunecraftPlugin extends Plugin
 		overlayManager.remove(essencePouchOverlay);
 		abyssObjects.clear();
 		darkMage = null;
-		degradedPouchInInventory = false;
 	}
 
 	@Subscribe
@@ -283,7 +281,13 @@ public class RunecraftPlugin extends Plugin
 					break;
 			}
 		}
-		degradedPouchInInventory = medium.isDegraded() || large.isDegraded() || giant.isDegraded();
+
+		if (clickedItems.isEmpty())
+		{
+			lastSpace = newSpace;
+			lastEssence = newEss;
+			return;
+		}
 
 		final int tick = client.getTickCount();
 

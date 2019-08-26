@@ -104,13 +104,14 @@ class AbyssOverlay extends Overlay
 
 	private void highlightDarkMage(Graphics2D graphics)
 	{
-		if (!plugin.isDegradedPouchInInventory())
+		NPC darkMage = plugin.getDarkMage();
+		if (darkMage == null)
 		{
 			return;
 		}
 
-		NPC darkMage = plugin.getDarkMage();
-		if (darkMage == null)
+		boolean isDegraded = Pouch.MEDIUM.isDegraded() || Pouch.LARGE.isDegraded() || Pouch.GIANT.isDegraded();
+		if (!isDegraded)
 		{
 			return;
 		}
