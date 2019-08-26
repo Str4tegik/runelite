@@ -33,15 +33,13 @@ import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
 
-public class EssencePouchOverlay extends WidgetItemOverlay
+class EssencePouchOverlay extends WidgetItemOverlay
 {
-	private final RunecraftPlugin plugin;
 	private final RunecraftConfig config;
 
 	@Inject
-	EssencePouchOverlay(RunecraftPlugin plugin, RunecraftConfig config)
+	EssencePouchOverlay(RunecraftConfig config)
 	{
-		this.plugin = plugin;
 		this.config = config;
 		showOnInventory();
 	}
