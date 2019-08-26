@@ -262,22 +262,16 @@ public class RunecraftPlugin extends Plugin
 					newSpace += 1;
 					break;
 				case ItemID.MEDIUM_POUCH:
-					medium.degrade(false);
+				case ItemID.LARGE_POUCH:
+				case ItemID.GIANT_POUCH:
+					Pouch pouch = Pouch.forItem(item.getId());
+					pouch.degrade(false);
 					break;
 				case ItemID.MEDIUM_POUCH_5511:
-					medium.degrade(true);
-					break;
-				case ItemID.LARGE_POUCH:
-					large.degrade(false);
-					break;
 				case ItemID.LARGE_POUCH_5513:
-					large.degrade(true);
-					break;
-				case ItemID.GIANT_POUCH:
-					giant.degrade(false);
-					break;
 				case ItemID.GIANT_POUCH_5515:
-					giant.degrade(true);
+					pouch = Pouch.forItem(item.getId());
+					pouch.degrade(true);
 					break;
 			}
 		}
