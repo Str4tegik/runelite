@@ -140,6 +140,7 @@ public class RunecraftPlugin extends Plugin
 
 		for (Pouch pouch : Pouch.values())
 		{
+			pouch.setHolding(0);
 			pouch.setUnknown(true);
 		}
 	}
@@ -297,39 +298,16 @@ public class RunecraftPlugin extends Plugin
 
 			Pouch pouch = op.pouch;
 
-			if (pouch.isUnknown())
-			{
-				if (op.delta > 0)
-				{
-					int holds = pouch.getHoldAmount();
-
-					// We know that this will always fill up the pouch
-					if (essence >= holds)
-					{
-						// Pouch now has a known amount
-						pouch.setHolding(holds);
-						pouch.setUnknown(false);
-					}
-				}
-				else if (op.delta < 0)
-				{
-					int holds = pouch.getHoldAmount();
-
-					// We know the pouch will always completely empty
-					if (space >= holds)
-					{
-						pouch.setHolding(0);
-						pouch.setUnknown(false);
-					}
-				}
-
-				// Can't tell what would happen next, so ignore it
-				break;
-			}
-
 			final boolean fill = op.delta > 0;
 			final int required = fill ? pouch.getRemaining() : pouch.getHolding();
 			final int essenceGot = op.delta * min(required, fill ? essence : space);
+
+			// if we have enough essence or space to fill or empty the entire pouch, it no
+			// longer becomes unknown
+			if (pouch.isUnknown() && (fill ? essence : space) >= pouch.getHoldAmount())
+			{
+				pouch.setUnknown(false);
+			}
 
 			essence -= essenceGot;
 			space += essenceGot;
