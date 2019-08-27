@@ -245,9 +245,6 @@ public class RunecraftPlugin extends Plugin
 
 		int newEss = 0;
 		int newSpace = 0;
-		Pouch medium = Pouch.MEDIUM;
-		Pouch large = Pouch.LARGE;
-		Pouch giant = Pouch.GIANT;
 
 		// Count ess/space, and change pouch states
 		for (Item item : items)
