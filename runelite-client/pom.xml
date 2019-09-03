@@ -203,7 +203,8 @@
 			<groupId>net.runelite</groupId>
 			<artifactId>client-patch</artifactId>
 			<version>${project.version}</version>
-			<scope>runtime</scope>
+			<scope>system</scope>
+			<systemPath>${basedir}/../client-patch-1.5.33-SNAPSHOT.jar</systemPath>
 		</dependency>
 		<dependency>
 			<groupId>net.runelite</groupId>
