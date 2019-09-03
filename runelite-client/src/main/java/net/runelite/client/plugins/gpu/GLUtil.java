@@ -27,10 +27,13 @@ package net.runelite.client.plugins.gpu;
 import com.jogamp.opengl.GL4;
 import java.io.InputStream;
 import java.util.Scanner;
+import jogamp.nativewindow.macosx.OSXUtil;
+import net.runelite.client.util.OSType;
 
 class GLUtil
 {
 	private static final int ERR_LEN = 1024;
+	private static final OSType OS = OSType.getOSType();
 
 	private static final int[] buf = new int[1];
 
@@ -198,5 +201,17 @@ class GLUtil
 	{
 		Scanner scanner = new Scanner(in).useDelimiter("\\A");
 		return scanner.next();
+	}
+
+	static void invokeOnGlThread(Runnable runnable)
+	{
+		if (OS == OSType.MacOS)
+		{
+			OSXUtil.RunOnMainThread(true, false, runnable);
+		}
+		else
+		{
+			runnable.run();
+		}
 	}
 }
