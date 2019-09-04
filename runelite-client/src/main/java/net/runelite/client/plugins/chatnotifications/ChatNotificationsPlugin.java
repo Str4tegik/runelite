@@ -114,7 +114,6 @@ public class ChatNotificationsPlugin extends Plugin
 		{
 			List<String> items = Text.fromCSV(config.highlightWordsString());
 			String joined = items.stream()
-				.map(Text::escapeJagex) // we compare these strings to the raw Jagex ones
 				.map(Pattern::quote)
 				.collect(Collectors.joining("|"));
 			// To match <word> \b doesn't work due to <> not being in \w,
@@ -176,14 +175,15 @@ public class ChatNotificationsPlugin extends Plugin
 
 		if (highlightMatcher != null)
 		{
-			String nodeValue = messageNode.getValue();
+			String nodeValue = Text.unscapeJagex(messageNode.getValue());
 			Matcher matcher = highlightMatcher.matcher(nodeValue);
 			boolean found = false;
 			StringBuffer stringBuffer = new StringBuffer();
 
 			while (matcher.find())
 			{
-				String value = matcher.group();
+				// Re-escape the part of the message which matches
+				String value = Text.escapeJagex(matcher.group());
 				matcher.appendReplacement(stringBuffer, "<col" + ChatColorType.HIGHLIGHT + ">" + value + "<col" + ChatColorType.NORMAL + ">");
 				update = true;
 				found = true;

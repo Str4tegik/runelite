@@ -42,4 +42,9 @@ public class TextTest
 		assertEquals("Remove no tags", Text.removeTags("Remove no tags"));
 	}
 
+	@Test
+	public void testUnescapeJagex()
+	{
+		assertEquals("<moo> cow", Text.unscapeJagex("<col=ff0000><lt>moo<gt><br> cow"));
+	}
 }

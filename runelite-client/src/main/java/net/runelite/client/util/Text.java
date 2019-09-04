@@ -151,6 +151,56 @@ public class Text
 	}
 
 	/**
+	 * Unescape a Jagex string, replacing &lt;lt&gt; and &lt;gt&gt; with their unescaped counterparts
+	 * @param str
+	 * @return
+	 */
+	public static String unscapeJagex(String str)
+	{
+		StringBuilder out = new StringBuilder(str.length());
+
+		boolean inTag = false;
+		int begin = -1;
+		for (int i = 0; i < str.length(); ++i)
+		{
+			char c = str.charAt(i);
+
+			if (c == '<')
+			{
+				begin = i;
+				inTag = true;
+			}
+			else if (c == '>' && inTag)
+			{
+				String tag = str.substring(begin + 1, i);
+
+				// We ignore color and br as they are non printing
+				if (tag.equals("lt"))
+				{
+					out.append('<');
+				}
+				else if (tag.equals("gt"))
+				{
+					out.append('>');
+				}
+				else if (tag.startsWith("img="))
+				{
+					// This can't be unescaped, but should still be retained
+					out.append('<').append(tag).append('>');
+				}
+
+				inTag = false;
+			}
+			else if (!inTag)
+			{
+				out.append(c);
+			}
+		}
+
+		return out.toString();
+	}
+
+	/**
 	 * Cleans the ironman status icon from playername string if present and
 	 * corrects spaces.
 	 *

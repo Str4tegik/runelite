@@ -132,6 +132,44 @@ public class ChatNotificationsPluginTest
 	}
 
 	@Test
+	public void testColor()
+	{
+		when(config.highlightWordsString()).thenReturn("you. It");
+
+		String message = "Your dodgy necklace protects you. <col=ff0000>It has 1 charge left.</col>";
+		MessageNode messageNode = mock(MessageNode.class);
+		when(messageNode.getValue()).thenReturn(message);
+
+		ChatMessage chatMessage = new ChatMessage();
+		chatMessage.setType(ChatMessageType.PUBLICCHAT);
+		chatMessage.setMessageNode(messageNode);
+
+		chatNotificationsPlugin.startUp(); // load highlight config
+		chatNotificationsPlugin.onChatMessage(chatMessage);
+
+		verify(messageNode).setValue("Your dodgy necklace protects <colHIGHLIGHT>you. It<colNORMAL> has 1 charge left.");
+	}
+
+	@Test
+	public void testEmoji()
+	{
+		when(config.highlightWordsString()).thenReturn("test");
+
+		String message = "emoji test <img=29>";
+		MessageNode messageNode = mock(MessageNode.class);
+		when(messageNode.getValue()).thenReturn(message);
+
+		ChatMessage chatMessage = new ChatMessage();
+		chatMessage.setType(ChatMessageType.PUBLICCHAT);
+		chatMessage.setMessageNode(messageNode);
+
+		chatNotificationsPlugin.startUp(); // load highlight config
+		chatNotificationsPlugin.onChatMessage(chatMessage);
+
+		verify(messageNode).setValue("emoji <colHIGHLIGHT>test<colNORMAL> <img=29>");
+	}
+
+	@Test
 	public void highlightListTest()
 	{
 		when(config.highlightWordsString()).thenReturn("this,is, a                   , test, ");
