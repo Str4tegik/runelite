@@ -25,6 +25,7 @@
  */
 package net.runelite.client.plugins.chatnotifications;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.inject.Provides;
 import java.util.List;
@@ -115,7 +116,7 @@ public class ChatNotificationsPlugin extends Plugin
 			List<String> items = Text.fromCSV(config.highlightWordsString());
 			String joined = items.stream()
 				.map(Text::escapeJagex) // we compare these strings to the raw Jagex ones
-				.map(Pattern::quote)
+				.map(this::quoteAndIgnoreColor) // regex escape and ignore nested colors in the target message
 				.collect(Collectors.joining("|"));
 			// To match <word> \b doesn't work due to <> not being in \w,
 			// so match \b or \s
@@ -180,11 +181,24 @@ public class ChatNotificationsPlugin extends Plugin
 			Matcher matcher = highlightMatcher.matcher(nodeValue);
 			boolean found = false;
 			StringBuffer stringBuffer = new StringBuffer();
+			String prevEndColor = "<col" + ChatColorType.NORMAL + '>'; // color to end highlight with
 
 			while (matcher.find())
 			{
 				String value = matcher.group();
-				matcher.appendReplacement(stringBuffer, "<col" + ChatColorType.HIGHLIGHT + ">" + value + "<col" + ChatColorType.NORMAL + ">");
+
+				// Get the last color from the highlight to use for the ending color. Otherwise
+				// we use what the previous color was
+				String endColor = getLastColor(value);
+				if (endColor != null)
+				{
+					prevEndColor = endColor;
+				}
+
+				// Strip color tags from the highlighted region so that it remains highlighted correctly
+				value = stripColor(value);
+
+				matcher.appendReplacement(stringBuffer, "<col" + ChatColorType.HIGHLIGHT + '>' + value + prevEndColor);
 				update = true;
 				found = true;
 			}
@@ -227,5 +241,61 @@ public class ChatNotificationsPlugin extends Plugin
 		stringBuilder.append(Text.removeTags(message.getMessage()));
 		String notification = stringBuilder.toString();
 		notifier.notify(notification);
+	}
+
+	private String quoteAndIgnoreColor(String str)
+	{
+		StringBuilder stringBuilder = new StringBuilder();
+
+		for (int i = 0; i < str.length(); ++i)
+		{
+			char c = str.charAt(i);
+			stringBuilder.append(Pattern.quote("" + c));
+			stringBuilder.append("(?:<col=[^>]*?>)?");
+		}
+
+		return stringBuilder.toString();
+	}
+
+	/**
+	 * Get the last color tag from a string, or null if there was none or was &lt;/col&gt;
+	 *
+	 * @param str
+	 * @return
+	 */
+	private static String getLastColor(String str)
+	{
+		int colIdx = str.lastIndexOf("<col=");
+		int colEndIdx = str.lastIndexOf("</col>");
+
+		if (colEndIdx > colIdx)
+		{
+			return null; // ends in a </col>
+		}
+
+		if (colIdx == -1)
+		{
+			return null; // no color
+		}
+
+		int closeIdx = str.indexOf('>', colIdx);
+		if (closeIdx == -1)
+		{
+			return null; // unclosed col tag
+		}
+
+		return str.substring(colIdx, closeIdx + 1); // include the >
+	}
+
+	/**
+	 * Strip color tags from a string.
+	 *
+	 * @param str
+	 * @return
+	 */
+	@VisibleForTesting
+	static String stripColor(String str)
+	{
+		return str.replaceAll("(<col=[0-9a-f]+>|</col>)", "");
 	}
 }
