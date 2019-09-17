@@ -60,26 +60,18 @@ enum Boss
 
 	@Getter
 	private final int[] ids;
-	private final int[] minions;
 	private final float[] modifier; // Some NPCs have a modifier to the experience a player receives.
 
 	Boss(float modifier, int... ids)
 	{
 		this.modifier = new float[]{modifier};
 		this.ids = ids;
-		this.minions = null;
 	}
 
 	Boss(float[] modifiers, int... ids)
 	{
-		this(modifiers, null, ids);
-	}
-
-	Boss(float[] modifiers, int[] minions, int ... ids)
-	{
-		this.ids = ids;
 		this.modifier = modifiers;
-		this.minions = minions;
+		this.ids = ids;
 	}
 
 	float getModifier()
