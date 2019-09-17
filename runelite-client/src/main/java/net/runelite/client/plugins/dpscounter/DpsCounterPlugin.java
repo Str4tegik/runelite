@@ -124,8 +124,9 @@ public class DpsCounterPlugin extends Plugin
 			return;
 		}
 
+		Player player = client.getLocalPlayer();
 		final int xp = client.getSkillExperience(Skill.HITPOINTS);
-		if (boss == null || lastHpExp < 0 || xp <= lastHpExp)
+		if (boss == null || lastHpExp < 0 || xp <= lastHpExp || bossNpc == null || bossNpc != player.getInteracting())
 		{
 			lastHpExp = xp;
 			return;
@@ -150,11 +151,9 @@ public class DpsCounterPlugin extends Plugin
 
 		// Update local member
 		PartyMember localMember = partyService.getLocalMember();
-		Player player = client.getLocalPlayer();
 		// If not in a party, user local player name
 		final String name = localMember == null ? player.getName() : localMember.getName();
 		DpsMember dpsMember = members.computeIfAbsent(name, n -> new DpsMember(name));
-		dpsMember.addDamage(hit);
 
 		if (dpsMember.isPaused())
 		{
@@ -162,15 +161,13 @@ public class DpsCounterPlugin extends Plugin
 			log.debug("Unpausing {}", dpsMember.getName());
 		}
 
-		if (hit > 0 && !partyService.getMembers().isEmpty())
+		dpsMember.addDamage(hit);
+
+		if (hit > 0 && localMember != null)
 		{
-			// Check the player is attacking the boss
-			if (bossNpc != null && player.getInteracting() == bossNpc)
-			{
-				final DpsUpdate specialCounterUpdate = new DpsUpdate(bossNpc.getId(), hit);
-				specialCounterUpdate.setMemberId(partyService.getLocalMember().getMemberId());
-				wsClient.send(specialCounterUpdate);
-			}
+			final DpsUpdate specialCounterUpdate = new DpsUpdate(bossNpc.getId(), hit);
+			specialCounterUpdate.setMemberId(partyService.getLocalMember().getMemberId());
+			wsClient.send(specialCounterUpdate);
 		}
 	}
 
