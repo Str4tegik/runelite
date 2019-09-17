@@ -1,22 +1,22 @@
 package net.runelite.client.plugins.dpscounter;
 
-import com.google.common.collect.ImmutableSet;
 import com.google.inject.Inject;
 import com.google.inject.Provides;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Actor;
 import net.runelite.api.Client;
+import net.runelite.api.Hitsplat;
 import net.runelite.api.MenuAction;
 import net.runelite.api.NPC;
 import net.runelite.api.Player;
 import net.runelite.api.Skill;
 import net.runelite.api.Varbits;
 import net.runelite.api.events.ExperienceChanged;
+import net.runelite.api.events.HitsplatApplied;
 import net.runelite.api.events.InteractingChanged;
 import net.runelite.api.events.NpcDespawned;
 import net.runelite.api.events.NpcSpawned;
@@ -39,6 +39,12 @@ import org.apache.commons.lang3.ArrayUtils;
 @Slf4j
 public class DpsCounterPlugin extends Plugin
 {
+	private static final Varbits[] TOB_PARTY_ORBS_VARBITS = new Varbits[]{
+		Varbits.THEATRE_OF_BLOOD_ORB_1, Varbits.THEATRE_OF_BLOOD_ORB_2,
+		Varbits.THEATRE_OF_BLOOD_ORB_3, Varbits.THEATRE_OF_BLOOD_ORB_4,
+		Varbits.THEATRE_OF_BLOOD_ORB_5
+	};
+
 	@Inject
 	private Client client;
 
@@ -54,15 +60,13 @@ public class DpsCounterPlugin extends Plugin
 	@Inject
 	private DpsOverlay dpsOverlay;
 
-	static private final Set<Varbits> TOB_PARTY_ORBS_VARBITS = ImmutableSet.of(Varbits.THEATRE_OF_BLOOD_ORB_1,
-		Varbits.THEATRE_OF_BLOOD_ORB_2, Varbits.THEATRE_OF_BLOOD_ORB_3, Varbits.THEATRE_OF_BLOOD_ORB_4,
-		Varbits.THEATRE_OF_BLOOD_ORB_5);
-
 	private Boss boss;
 	private NPC bossNpc;
 	private int lastHpExp = -1;
 	@Getter(AccessLevel.PACKAGE)
 	private final Map<String, DpsMember> members = new ConcurrentHashMap<>();
+	@Getter(AccessLevel.PACKAGE)
+	private DpsMember total = new DpsMember("Total");
 
 	@Provides
 	DpsConfig provideConfig(ConfigManager configManager)
@@ -202,6 +206,30 @@ public class DpsCounterPlugin extends Plugin
 	}
 
 	@Subscribe
+	public void onHitsplatApplied(HitsplatApplied hitsplatApplied)
+	{
+		Actor actor = hitsplatApplied.getActor();
+		Player local = client.getLocalPlayer();
+
+		if (actor == local.getInteracting() || bossNpc == actor)
+		{
+			Hitsplat hitsplat = hitsplatApplied.getHitsplat();
+
+			if (hitsplat.getHitsplatType() != Hitsplat.HitsplatType.DAMAGE)
+			{
+				return;
+			}
+
+			if (total.isPaused())
+			{
+				total.unpause();
+			}
+
+			total.addDamage(hitsplat.getAmount());
+		}
+	}
+
+	@Subscribe
 	public void onOverlayMenuClicked(OverlayMenuClicked event)
 	{
 		if (event.getEntry().getMenuAction() == MenuAction.RUNELITE_OVERLAY &&
@@ -254,6 +282,7 @@ public class DpsCounterPlugin extends Plugin
 		{
 			dpsMember.pause();
 		}
+		total.pause();
 	}
 
 	private int getHit(float modifier, int deltaExperience)
@@ -271,7 +300,6 @@ public class DpsCounterPlugin extends Plugin
 			if (client.getVar(varbit) != 0)
 			{
 				partySize++;
-				System.out.println(varbit.getId() + ": " + client.getVar(varbit));
 			}
 			else
 			{
