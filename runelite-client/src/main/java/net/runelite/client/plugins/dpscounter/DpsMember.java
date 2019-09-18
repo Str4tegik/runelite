@@ -51,4 +51,10 @@ class DpsMember
 		start = start.plus(Duration.between(end, Instant.now()));
 		end = null;
 	}
+
+	void reset()
+	{
+		damage = 0;
+		start = end = Instant.now();
+	}
 }

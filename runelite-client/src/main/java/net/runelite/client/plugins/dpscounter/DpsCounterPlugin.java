@@ -1,9 +1,9 @@
 package net.runelite.client.plugins.dpscounter;
 
-import com.google.inject.Inject;
 import com.google.inject.Provides;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import javax.inject.Inject;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -59,6 +59,9 @@ public class DpsCounterPlugin extends Plugin
 
 	@Inject
 	private DpsOverlay dpsOverlay;
+
+	@Inject
+	private DpsConfig dpsConfig;
 
 	private Boss boss;
 	private NPC bossNpc;
@@ -237,6 +240,7 @@ public class DpsCounterPlugin extends Plugin
 			event.getEntry().getTarget().equals("DPS counter"))
 		{
 			members.clear();
+			total.reset();
 		}
 	}
 
@@ -257,6 +261,12 @@ public class DpsCounterPlugin extends Plugin
 
 		log.debug("Boss has spawned!");
 		bossNpc = npc;
+
+		if (dpsConfig.resetOnSpawn())
+		{
+			members.forEach((k, v) -> v.reset());
+			total.reset();
+		}
 	}
 
 	@Subscribe

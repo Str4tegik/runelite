@@ -9,11 +9,22 @@ public interface DpsConfig extends Config
 {
 	@ConfigItem(
 		position = 0,
-		name = "Show Damage",
 		keyName = "showDamage",
+		name = "Show Damage",
 		description = "Show total damage instead of DPS"
 	)
 	default boolean showDamage()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		position = 1,
+		keyName = "resetOnSpawn",
+		name = "Reset on boss spawn",
+		description = "Resets the damage counter whenever a new boss spawns"
+	)
+	default boolean resetOnSpawn()
 	{
 		return false;
 	}
