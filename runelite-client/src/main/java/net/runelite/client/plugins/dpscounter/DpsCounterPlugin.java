@@ -34,7 +34,8 @@ import org.apache.commons.lang3.ArrayUtils;
 
 @PluginDescriptor(
 	name = "DPS Counter",
-	description = "counts dps?"
+	description = "Counts damage (per second) to a boss by a party",
+	enabledByDefault = false
 )
 @Slf4j
 public class DpsCounterPlugin extends Plugin
@@ -173,7 +174,7 @@ public class DpsCounterPlugin extends Plugin
 		if (hit > 0 && localMember != null)
 		{
 			final DpsUpdate specialCounterUpdate = new DpsUpdate(bossNpc.getId(), hit);
-			specialCounterUpdate.setMemberId(partyService.getLocalMember().getMemberId());
+			specialCounterUpdate.setMemberId(localMember.getMemberId());
 			wsClient.send(specialCounterUpdate);
 		}
 	}
@@ -212,9 +213,8 @@ public class DpsCounterPlugin extends Plugin
 	public void onHitsplatApplied(HitsplatApplied hitsplatApplied)
 	{
 		Actor actor = hitsplatApplied.getActor();
-		Player local = client.getLocalPlayer();
 
-		if (actor == local.getInteracting() || bossNpc == actor)
+		if (bossNpc == actor)
 		{
 			Hitsplat hitsplat = hitsplatApplied.getHitsplat();
 
@@ -261,12 +261,6 @@ public class DpsCounterPlugin extends Plugin
 
 		log.debug("Boss has spawned!");
 		bossNpc = npc;
-
-		if (dpsConfig.resetOnSpawn())
-		{
-			members.forEach((k, v) -> v.reset());
-			total.reset();
-		}
 	}
 
 	@Subscribe

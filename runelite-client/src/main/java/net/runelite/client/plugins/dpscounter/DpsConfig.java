@@ -15,17 +15,6 @@ public interface DpsConfig extends Config
 	)
 	default boolean showDamage()
 	{
-		return false;
-	}
-
-	@ConfigItem(
-		position = 1,
-		keyName = "resetOnSpawn",
-		name = "Reset on boss spawn",
-		description = "Resets the damage counter whenever a new boss spawns"
-	)
-	default boolean resetOnSpawn()
-	{
-		return false;
+		return true;
 	}
 }
