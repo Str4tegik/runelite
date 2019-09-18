@@ -142,7 +142,7 @@ public class DpsCounterPlugin extends Plugin
 		final int delta = xp - lastHpExp;
 
 		float modifier;
-		if (Boss.isTOB(boss))
+		if (boss.isTob())
 		{
 			int partySize = getTobPartySize();
 			System.out.println(partySize);

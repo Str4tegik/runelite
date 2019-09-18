@@ -25,9 +25,7 @@
 package net.runelite.client.plugins.dpscounter;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import java.util.Map;
-import java.util.Set;
 import lombok.Getter;
 import lombok.ToString;
 import net.runelite.api.NpcID;
@@ -56,22 +54,24 @@ enum Boss
 	VERZIK_P2(new float[]{1.35f, 1.4f, 1.425f}, NpcID.VERZIK_VITUR_8372),
 	VERZIK_P3(new float[]{1.675f, 1.75f, 1.85f}, NpcID.VERZIK_VITUR_8374);
 
-	private static final Set<Boss> TOB_BOSSES = ImmutableSet.of(MAIDEN, BLOAT, NYLOCAS_BOSS, SOTETSEG, XARPUS, VERZIK_P1, VERZIK_P2, VERZIK_P3);
-
 	@Getter
 	private final int[] ids;
 	private final float[] modifier; // Some NPCs have a modifier to the experience a player receives.
+	@Getter
+	private final boolean isTob;
 
 	Boss(float modifier, int... ids)
 	{
 		this.modifier = new float[]{modifier};
 		this.ids = ids;
+		this.isTob = false;
 	}
 
 	Boss(float[] modifiers, int... ids)
 	{
 		this.modifier = modifiers;
 		this.ids = ids;
+		this.isTob = true;
 	}
 
 	float getModifier()
@@ -105,11 +105,6 @@ enum Boss
 	static Boss findBoss(int id)
 	{
 		return BOSS_MAP.get(id);
-	}
-
-	static boolean isTOB(Boss boss)
-	{
-		return TOB_BOSSES.contains(boss);
 	}
 
 	static
