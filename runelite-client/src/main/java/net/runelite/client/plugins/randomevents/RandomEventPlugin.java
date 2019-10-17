@@ -30,6 +30,7 @@ import com.google.inject.Provides;
 import java.util.Arrays;
 import java.util.Set;
 import javax.inject.Inject;
+import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Actor;
 import net.runelite.api.Client;
 import net.runelite.api.MenuAction;
@@ -50,6 +51,7 @@ import net.runelite.client.plugins.PluginDescriptor;
 	description = "Notify when random events appear and remove talk/dismiss options on events that aren't yours.",
 	enabledByDefault = false
 )
+@Slf4j
 public class RandomEventPlugin extends Plugin
 {
 	private static final Set<Integer> EVENT_NPCS = ImmutableSet.of(
@@ -83,7 +85,7 @@ public class RandomEventPlugin extends Plugin
 	private static final int RANDOM_EVENT_TIMEOUT = 150;
 
 	private NPC currentRandomEvent;
-	private int lastEventTick = -RANDOM_EVENT_TIMEOUT; // to avoid double notifications
+	private int lastNotificationTick = -RANDOM_EVENT_TIMEOUT; // to avoid double notifications
 
 	@Inject
 	private Client client;
@@ -103,7 +105,7 @@ public class RandomEventPlugin extends Plugin
 	@Override
 	protected void shutDown() throws Exception
 	{
-		lastEventTick = 0;
+		lastNotificationTick = 0;
 		currentRandomEvent = null;
 	}
 
@@ -121,10 +123,13 @@ public class RandomEventPlugin extends Plugin
 			return;
 		}
 
-		if (client.getTickCount() - lastEventTick > RANDOM_EVENT_TIMEOUT)
+		log.debug("Random event spawn: {}", source.getName());
+
+		currentRandomEvent = (NPC) source;
+
+		if (client.getTickCount() - lastNotificationTick > RANDOM_EVENT_TIMEOUT)
 		{
-			currentRandomEvent = (NPC) source;
-			lastEventTick = client.getTickCount();
+			lastNotificationTick = client.getTickCount();
 
 			if (shouldNotify(currentRandomEvent.getId()))
 			{
