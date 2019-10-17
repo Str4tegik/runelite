@@ -83,8 +83,7 @@ public class RandomEventPlugin extends Plugin
 	private static final int RANDOM_EVENT_TIMEOUT = 150;
 
 	private NPC currentRandomEvent;
-	// event npcs teleport to you to stay in range, we need to throttle spawns
-	private int lastEventTick = -RANDOM_EVENT_TIMEOUT;
+	private int lastEventTick = -RANDOM_EVENT_TIMEOUT; // to avoid double notifications
 
 	@Inject
 	private Client client;
