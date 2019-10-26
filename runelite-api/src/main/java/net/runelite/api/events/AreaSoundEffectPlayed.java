@@ -25,13 +25,22 @@
 package net.runelite.api.events;
 
 import lombok.Data;
+import net.runelite.api.Actor;
 
 @Data
 public class AreaSoundEffectPlayed
 {
+	private final Actor source;
 	private int soundId;
 	private int sceneX;
 	private int sceneY;
 	private int range;
 	private int delay;
+
+	private boolean consumed;
+
+	public void consume()
+	{
+		consumed = true;
+	}
 }
