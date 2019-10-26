@@ -123,6 +123,7 @@ class SoundEffectOverlay extends Overlay
 
 		String text =
 			"Id: " + event.getSoundId() +
+			" - S: " + event.getSource().getName() +
 			" - L: " + event.getSceneX() + "," + event.getSceneY() +
 			" - R: " + event.getRange() +
 			" - D: " + event.getDelay();
