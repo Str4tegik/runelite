@@ -482,7 +482,13 @@ public class WorldHopperPlugin extends Plugin
 			return;
 		}
 
-		fetchWorlds();
+		final GameState gameState = client.getGameState();
+		boolean loginScreen = gameState == GameState.LOGIN_SCREEN || gameState == GameState.LOGIN_SCREEN_AUTHENTICATOR;
+
+		if (firstRun || !loginScreen)
+		{
+			fetchWorlds();
+		}
 
 		// Ping worlds once at startup
 		if (firstRun)
