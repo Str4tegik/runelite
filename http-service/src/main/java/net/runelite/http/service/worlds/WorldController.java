@@ -52,7 +52,7 @@ public class WorldController
 			.body(worldResult);
 	}
 
-	@Scheduled(fixedDelay = 60_000L)
+	@Scheduled(fixedDelay = 60_000L * 10) // 10 minutes
 	public void refreshWorlds() throws IOException
 	{
 		worldResult = worldsService.getWorlds();
