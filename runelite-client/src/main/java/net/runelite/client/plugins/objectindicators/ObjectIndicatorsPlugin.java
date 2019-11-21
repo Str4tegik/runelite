@@ -294,23 +294,10 @@ public class ObjectIndicatorsPlugin extends Plugin implements KeyListener
 		final Tile tile = tiles[z][x][y];
 
 		TileObject object = findTileObject(tile, event.getId());
-		if (object == null)
+		if (object != null)
 		{
-			return;
+			markObject(object);
 		}
-
-		// object.getId() is always the base object id, getObjectComposition transforms it to
-		// the correct object we see
-		ObjectComposition objectDefinition = getObjectComposition(object.getId());
-		String name = objectDefinition.getName();
-		// Name is probably never "null" - however prevent adding it if it is, as it will
-		// become ambiguous as objects with no name are assigned name "null"
-		if (Strings.isNullOrEmpty(name) || name.equals("null"))
-		{
-			return;
-		}
-
-		markObject(name, object);
 	}
 
 	private void checkObjectPoints(TileObject object)
@@ -328,8 +315,7 @@ public class ObjectIndicatorsPlugin extends Plugin implements KeyListener
 			if ((worldPoint.getX() & (REGION_SIZE - 1)) == objectPoint.getRegionX()
 					&& (worldPoint.getY() & (REGION_SIZE - 1)) == objectPoint.getRegionY())
 			{
-				// Transform object to get the name which matches against what we've stored
-				if (objectPoint.getName().equals(getObjectComposition(object.getId()).getName()))
+				if (objectPoint.getId() == object.getId())
 				{
 					log.debug("Marking object {} due to matching {}", object, objectPoint);
 					objects.add(object);
@@ -407,7 +393,7 @@ public class ObjectIndicatorsPlugin extends Plugin implements KeyListener
 		return false;
 	}
 
-	private void markObject(String name, final TileObject object)
+	private void markObject(final TileObject object)
 	{
 		if (object == null)
 		{
@@ -417,7 +403,7 @@ public class ObjectIndicatorsPlugin extends Plugin implements KeyListener
 		final WorldPoint worldPoint = WorldPoint.fromLocalInstance(client, object.getLocalLocation());
 		final int regionId = worldPoint.getRegionID();
 		final ObjectPoint point = new ObjectPoint(
-			name,
+			object.getId(),
 			regionId,
 			worldPoint.getX() & (REGION_SIZE - 1),
 			worldPoint.getY() & (REGION_SIZE - 1),
@@ -470,13 +456,7 @@ public class ObjectIndicatorsPlugin extends Plugin implements KeyListener
 		// in most cases due to the specific object being identified being ambiguous, so remove
 		// them
 		return points.stream()
-			.filter(point -> !point.getName().equals("null"))
+			.filter(point -> point.getId() != -1)
 			.collect(Collectors.toSet());
-	}
-
-	private ObjectComposition getObjectComposition(int id)
-	{
-		ObjectComposition objectComposition = client.getObjectDefinition(id);
-		return objectComposition.getImpostorIds() == null ? objectComposition : objectComposition.getImpostor();
 	}
 }
