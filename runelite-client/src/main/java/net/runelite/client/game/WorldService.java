@@ -31,7 +31,6 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
@@ -49,9 +48,8 @@ public class WorldService
 	private final ScheduledExecutorService scheduledExecutorService;
 	private final WorldClient worldClient;
 
-	@Getter
-	@Nullable
 	private WorldResult worlds;
+	private boolean firstRun = true;
 
 	@Inject
 	private WorldService(Client client, ScheduledExecutorService scheduledExecutorService, WorldClient worldClient)
@@ -65,9 +63,23 @@ public class WorldService
 
 	private void tick()
 	{
-		if (worlds == null || client.getGameState() == GameState.LOGGED_IN)
+		try
 		{
-			fetch();
+			if (worlds == null || client.getGameState() == GameState.LOGGED_IN)
+			{
+				fetch();
+			}
+		}
+		finally
+		{
+			if (firstRun)
+			{
+				synchronized (this)
+				{
+					firstRun = false;
+					notifyAll();
+				}
+			}
 		}
 	}
 
@@ -90,5 +102,30 @@ public class WorldService
 	public void refresh()
 	{
 		scheduledExecutorService.execute(this::fetch);
+	}
+
+	@Nullable
+	public WorldResult getWorlds()
+	{
+		if (firstRun)
+		{
+			synchronized (this)
+			{
+				if (firstRun)
+				{
+					// wait for first run to finish
+					try
+					{
+						wait();
+					}
+					catch (InterruptedException e)
+					{
+						log.warn(null, e);
+					}
+				}
+			}
+		}
+
+		return worlds;
 	}
 }
