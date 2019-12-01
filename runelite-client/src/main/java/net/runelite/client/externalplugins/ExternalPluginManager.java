@@ -56,11 +56,11 @@ import net.runelite.client.events.SessionOpen;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginInstantiationException;
 import net.runelite.client.plugins.PluginManager;
-import net.runelite.client.util.CountingInputStream;
 import net.runelite.client.ui.SplashScreen;
+import net.runelite.client.util.CountingInputStream;
 import net.runelite.client.util.Text;
-import net.runelite.http.api.RuneLiteAPI;
 import net.runelite.client.util.VerificationException;
+import net.runelite.http.api.RuneLiteAPI;
 import okhttp3.HttpUrl;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -101,13 +101,13 @@ public class ExternalPluginManager
 	@Subscribe
 	public void onSessionOpen(SessionOpen event)
 	{
-		executor.submit(() -> refreshPlugins());
+		executor.submit(this::refreshPlugins);
 	}
 
 	@Subscribe
 	public void onSessionClose(SessionClose event)
 	{
-		executor.submit(() -> refreshPlugins());
+		executor.submit(this::refreshPlugins);
 	}
 
 	private void refreshPlugins()
@@ -159,15 +159,19 @@ public class ExternalPluginManager
 					if (manifest != null)
 					{
 						externalPlugins.add(manifest);
-						keep.add(manifest.getJarFile());
 
 						if (!manifest.isValid())
 						{
 							needsDownload.add(manifest);
 						}
+						else
+						{
+							keep.add(manifest.getJarFile());
+						}
 					}
 				}
 
+				// delete old plugins
 				File[] files = RuneLite.PLUGINS_DIR.listFiles();
 				if (files != null)
 				{
@@ -202,7 +206,7 @@ public class ExternalPluginManager
 						Files.asByteSink(manifest.getJarFile()).writeFrom(his);
 						if (!his.hash().toString().equals(manifest.getHash()))
 						{
-							throw new VerificationException("Plugin " + manifest.getInternalName() + " didn't match it's hash");
+							throw new VerificationException("Plugin " + manifest.getInternalName() + " didn't match its hash");
 						}
 					}
 					catch (IOException | VerificationException e)
@@ -229,6 +233,7 @@ public class ExternalPluginManager
 					add.add(ex);
 				}
 			}
+			// list of loaded external plugins that aren't in the manifest
 			Collection<Plugin> remove = loadedExternalPlugins.values();
 
 			for (Plugin p : remove)
@@ -247,6 +252,13 @@ public class ExternalPluginManager
 
 			for (ExternalPluginManifest manifest : add)
 			{
+				// I think this can't happen, but just in case
+				if (!manifest.isValid())
+				{
+					log.warn("Invalid plugin for validated manifest: {}", manifest);
+					continue;
+				}
+
 				log.info("Loading external plugin \"{}\" version \"{}\" commit \"{}\"", manifest.getInternalName(), manifest.getVersion(), manifest.getCommit());
 
 				List<Plugin> newPlugins = null;

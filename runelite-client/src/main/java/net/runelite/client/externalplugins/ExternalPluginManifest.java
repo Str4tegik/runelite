@@ -68,7 +68,7 @@ public class ExternalPluginManifest
 			if (file.exists())
 			{
 				String hash = Files.asByteSource(file).hash(Hashing.sha256()).toString();
-				if (hash.equals(hash))
+				if (this.hash.equals(hash))
 				{
 					return true;
 				}
