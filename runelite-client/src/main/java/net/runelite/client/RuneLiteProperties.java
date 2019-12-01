@@ -45,6 +45,7 @@ public class RuneLiteProperties
 	private static final String DNS_CHANGE_LINK = "runelite.dnschange.link";
 	private static final String JAV_CONFIG = "runelite.jav_config";
 	private static final String JAV_CONFIG_BACKUP = "runelite.jav_config_backup";
+	private static final String PLUGINHUB = "runelite.pluginhub";
 
 	private static final Properties properties = new Properties();
 
@@ -129,5 +130,10 @@ public class RuneLiteProperties
 	public static String getJavConfigBackup()
 	{
 		return properties.getProperty(JAV_CONFIG_BACKUP);
+	}
+
+	public static String getPluginHub()
+	{
+		return properties.getProperty(PLUGINHUB);
 	}
 }

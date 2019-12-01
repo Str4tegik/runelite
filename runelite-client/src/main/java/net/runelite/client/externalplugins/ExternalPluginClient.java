@@ -39,6 +39,7 @@ import java.security.cert.CertificateFactory;
 import java.util.List;
 import javax.imageio.ImageIO;
 import javax.inject.Inject;
+import net.runelite.client.RuneLiteProperties;
 import net.runelite.http.api.RuneLiteAPI;
 import net.runelite.client.util.VerificationException;
 import okhttp3.HttpUrl;
@@ -59,7 +60,7 @@ public class ExternalPluginClient
 
 	public List<ExternalPluginManifest> downloadManifest() throws IOException, VerificationException
 	{
-		HttpUrl manifest = RuneLiteAPI.getPluginHubBase()
+		HttpUrl manifest = HttpUrl.parse(RuneLiteProperties.getPluginHub())
 			.newBuilder()
 			.addPathSegments("manifest.js")
 			.build();
@@ -103,7 +104,7 @@ public class ExternalPluginClient
 			return null;
 		}
 
-		HttpUrl url = RuneLiteAPI.getPluginHubBase()
+		HttpUrl url = HttpUrl.parse(RuneLiteProperties.getPluginHub())
 			.newBuilder()
 			.addPathSegment(plugin.getInternalName())
 			.addPathSegment(plugin.getCommit() + ".png")

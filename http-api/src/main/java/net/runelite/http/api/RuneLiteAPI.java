@@ -52,7 +52,6 @@ public class RuneLiteAPI
 	private static final String BASE = "https://api.runelite.net";
 	private static final String WSBASE = "https://api.runelite.net/ws";
 	private static final String STATICBASE = "https://static.runelite.net";
-	private static final String PLUGINHUBBASE = "https://abex.sauville.org/externalplugin";
 	private static final Properties properties = new Properties();
 	private static String version;
 	private static int rsVersion;
@@ -144,18 +143,6 @@ public class RuneLiteAPI
 		}
 
 		return HttpUrl.parse(WSBASE);
-	}
-
-	public static HttpUrl getPluginHubBase()
-	{
-		final String prop = System.getProperty("runelite.pluginhub.url");
-
-		if (prop != null && !prop.isEmpty())
-		{
-			return HttpUrl.parse(prop);
-		}
-
-		return HttpUrl.parse(PLUGINHUBBASE + "/" + getVersion());
 	}
 
 	public static String getVersion()
