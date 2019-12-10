@@ -33,9 +33,16 @@ import static net.runelite.api.ChatMessageType.FRIENDSCHATNOTIFICATION;
 import static net.runelite.api.ChatMessageType.GAMEMESSAGE;
 import static net.runelite.api.ChatMessageType.TRADE;
 import net.runelite.api.Client;
+import net.runelite.api.Player;
 import net.runelite.api.events.ChatMessage;
+import net.runelite.api.events.GameTick;
+import net.runelite.api.events.WidgetLoaded;
+import net.runelite.api.widgets.Widget;
+import net.runelite.api.widgets.WidgetInfo;
 import net.runelite.client.config.ChatColorConfig;
 import net.runelite.client.config.ConfigManager;
+import static net.runelite.api.widgets.WidgetID.ADVENTURE_LOG_ID;
+import static net.runelite.api.widgets.WidgetID.COUNTERS_LOG_GROUP_ID;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -45,7 +52,9 @@ import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyInt;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -353,5 +362,72 @@ public class ChatCommandsPluginTest
 
 		verify(configManager).setConfiguration(eq("killcount.adam"), eq("chambers of xeric"), eq(52));
 		verify(configManager, never()).setConfiguration(eq("personalbest.adam"), eq("chambers of xeric"), anyInt());
+	}
+
+	@Test
+	public void testAdventureLogCountersPage()
+	{
+		Player player = mock(Player.class);
+		when(player.getName()).thenReturn(PLAYER_NAME);
+		when(client.getLocalPlayer()).thenReturn(player);
+
+		Widget advLogTitle = mock(Widget.class);
+		when(advLogTitle.getText()).thenReturn("The Exploits of " + PLAYER_NAME);
+		when(client.getWidget(WidgetInfo.ADVENTURE_LOG_TITLE)).thenReturn(advLogTitle);
+
+		WidgetLoaded advLogEvent = new WidgetLoaded();
+		advLogEvent.setGroupId(ADVENTURE_LOG_ID);
+		chatCommandsPlugin.onWidgetLoaded(advLogEvent);
+		chatCommandsPlugin.onGameTick(new GameTick());
+
+		String COUNTER_TEXT = "Duel Arena Wins: 4 Losses: 2  Last Man Standing Rank: 0  " +
+				"Treasure Trails Beginner: 0 Easy: 7 Medium: 28 Hard: 108 Elite: 15 Master: 27 Rank: Novice  " +
+				"Chompy Hunting Kills: 1,000 Rank: Ogre Expert  " +
+				"Order of the White Knights Rank: Master with a kill score of 1,300  " +
+				"TzHaar Fight Cave Fastest run: 38:10  Inferno Fastest run: -  " +
+				"Zulrah Fastest kill: 5:48  Vorkath Fastest kill: 1:21  Galvek Fastest kill: -  " +
+				"Grotesque Guardians Fastest kill: 2:49  Alchemical Hydra Fastest kill: -  " +
+				"Hespori Fastest kill: 0:57  The Gauntlet Fastest run: -  The Corrupted Gauntlet Fastest run: -  " +
+				"Fragment of Seren Fastest kill: -  Barbarian Assault High-level gambles: 15  Fremennik spirits rested: 0\n";
+
+		Widget countersPage = mock(Widget.class);
+		when(countersPage.getText()).thenReturn(COUNTER_TEXT);
+		when(client.getWidget(WidgetInfo.COUNTERS_LOG_TEXT)).thenReturn(countersPage);
+
+		WidgetLoaded countersLogEvent = new WidgetLoaded();
+		countersLogEvent.setGroupId(COUNTERS_LOG_GROUP_ID);
+		chatCommandsPlugin.onWidgetLoaded(countersLogEvent);
+		chatCommandsPlugin.onGameTick(new GameTick());
+
+		verify(configManager).setConfiguration(eq("personalbest.adam"), eq("tztok-jad"), eq(38 * 60 + 10));
+		verify(configManager).setConfiguration(eq("personalbest.adam"), eq("zulrah"), eq(5 * 60 + 48));
+		verify(configManager).setConfiguration(eq("personalbest.adam"), eq("vorkath"), eq(1 * 60 + 21));
+		verify(configManager).setConfiguration(eq("personalbest.adam"), eq("grotesque guardians"), eq(2 * 60 + 49));
+		verify(configManager).setConfiguration(eq("personalbest.adam"), eq("hespori"), eq( 57));
+
+	}
+
+	@Test
+	public void testNotYourAdventureLogCountersPage()
+	{
+		Player player = mock(Player.class);
+		when(player.getName()).thenReturn(PLAYER_NAME);
+		when(client.getLocalPlayer()).thenReturn(player);
+
+		Widget advLogTitle = mock(Widget.class);
+		when(advLogTitle.getText()).thenReturn("The Exploits of " + "not the player");
+		when(client.getWidget(WidgetInfo.ADVENTURE_LOG_TITLE)).thenReturn(advLogTitle);
+
+		WidgetLoaded advLogEvent = new WidgetLoaded();
+		advLogEvent.setGroupId(ADVENTURE_LOG_ID);
+		chatCommandsPlugin.onWidgetLoaded(advLogEvent);
+		chatCommandsPlugin.onGameTick(new GameTick());
+
+		WidgetLoaded countersLogEvent = new WidgetLoaded();
+		countersLogEvent.setGroupId(COUNTERS_LOG_GROUP_ID);
+		chatCommandsPlugin.onWidgetLoaded(countersLogEvent);
+		chatCommandsPlugin.onGameTick(new GameTick());
+
+		verifyNoMoreInteractions(configManager);
 	}
 }
