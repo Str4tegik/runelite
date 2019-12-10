@@ -47,11 +47,13 @@ import net.runelite.api.VarPlayer;
 import net.runelite.api.Varbits;
 import net.runelite.api.WorldType;
 import net.runelite.api.events.ChatMessage;
+import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.VarbitChanged;
 import net.runelite.api.events.WidgetLoaded;
 import net.runelite.api.vars.AccountType;
 import net.runelite.api.widgets.Widget;
+import static net.runelite.api.widgets.WidgetID.ADVENTURE_LOG_ID;
 import static net.runelite.api.widgets.WidgetID.KILL_LOGS_GROUP_ID;
 import net.runelite.api.widgets.WidgetInfo;
 import net.runelite.client.chat.ChatColorType;
@@ -95,6 +97,7 @@ public class ChatCommandsPlugin extends Plugin
 	private static final Pattern NEW_PB_PATTERN = Pattern.compile("(?i)^(?:Fight |Lap |Challenge |Corrupted challenge )?duration: <col=ff0000>([0-9:]+)</col> \\(new personal best\\)");
 	private static final Pattern DUEL_ARENA_WINS_PATTERN = Pattern.compile("You (were defeated|won)! You have(?: now)? won (\\d+) duels?");
 	private static final Pattern DUEL_ARENA_LOSSES_PATTERN = Pattern.compile("You have(?: now)? lost (\\d+) duels?");
+	private static final Pattern ADVENTURE_LOG_TITLE_PATTERN = Pattern.compile("The Exploits of (.+)");
 
 	private static final String TOTAL_LEVEL_COMMAND_STRING = "!total";
 	private static final String PRICE_COMMAND_STRING = "!price";
@@ -110,7 +113,9 @@ public class ChatCommandsPlugin extends Plugin
 	private final HiscoreClient hiscoreClient = new HiscoreClient();
 	private final ChatClient chatClient = new ChatClient();
 
-	private boolean logKills;
+	private boolean bossLogLoaded;
+	private boolean advLogLoaded;
+	private String pohOwner = null;
 	private HiscoreEndpoint hiscoreEndpoint; // hiscore endpoint for current player
 	private String lastBossKill;
 	private int lastPb = -1;
@@ -374,36 +379,46 @@ public class ChatCommandsPlugin extends Plugin
 	@Subscribe
 	public void onGameTick(GameTick event)
 	{
-		if (!logKills)
+		if (advLogLoaded)
 		{
-			return;
-		}
+			advLogLoaded = false;
 
-		logKills = false;
-
-		Widget title = client.getWidget(WidgetInfo.KILL_LOG_TITLE);
-		Widget bossMonster = client.getWidget(WidgetInfo.KILL_LOG_MONSTER);
-		Widget bossKills = client.getWidget(WidgetInfo.KILL_LOG_KILLS);
-
-		if (title == null || bossMonster == null || bossKills == null
-			|| !"Boss Kill Log".equals(title.getText()))
-		{
-			return;
-		}
-
-		Widget[] bossChildren = bossMonster.getChildren();
-		Widget[] killsChildren = bossKills.getChildren();
-
-		for (int i = 0; i < bossChildren.length; ++i)
-		{
-			Widget boss = bossChildren[i];
-			Widget kill = killsChildren[i];
-
-			String bossName = boss.getText().replace(":", "");
-			int kc = Integer.parseInt(kill.getText().replace(",", ""));
-			if (kc != getKc(bossName))
+			Widget adventureLogTitle = client.getWidget(WidgetInfo.ADVENTURE_LOG_TITLE);
+			Matcher advLogTitle = ADVENTURE_LOG_TITLE_PATTERN.matcher(adventureLogTitle.getText());
+			if (advLogTitle.find())
 			{
-				setKc(bossName, kc);
+				pohOwner = advLogTitle.group(1);
+			}
+		}
+
+		if (bossLogLoaded && (pohOwner == null || pohOwner.equals(client.getLocalPlayer().getName())))
+		{
+			bossLogLoaded = false;
+
+			Widget title = client.getWidget(WidgetInfo.KILL_LOG_TITLE);
+			Widget bossMonster = client.getWidget(WidgetInfo.KILL_LOG_MONSTER);
+			Widget bossKills = client.getWidget(WidgetInfo.KILL_LOG_KILLS);
+
+			if (title == null || bossMonster == null || bossKills == null
+					|| !"Boss Kill Log".equals(title.getText()))
+			{
+				return;
+			}
+
+			Widget[] bossChildren = bossMonster.getChildren();
+			Widget[] killsChildren = bossKills.getChildren();
+
+			for (int i = 0; i < bossChildren.length; ++i)
+			{
+				Widget boss = bossChildren[i];
+				Widget kill = killsChildren[i];
+
+				String bossName = boss.getText().replace(":", "");
+				int kc = Integer.parseInt(kill.getText().replace(",", ""));
+				if (kc != getKc(bossName))
+				{
+					setKc(bossName, kc);
+				}
 			}
 		}
 	}
@@ -411,14 +426,31 @@ public class ChatCommandsPlugin extends Plugin
 	@Subscribe
 	public void onWidgetLoaded(WidgetLoaded widget)
 	{
-		// don't load kc if in an instance, if the player is in another players poh
-		// and reading their boss log
-		if (widget.getGroupId() != KILL_LOGS_GROUP_ID || client.isInInstancedRegion())
+		int widgetGroup = widget.getGroupId();
+		if (widgetGroup != KILL_LOGS_GROUP_ID && widgetGroup != ADVENTURE_LOG_ID)
 		{
 			return;
 		}
 
-		logKills = true;
+		if (widgetGroup == ADVENTURE_LOG_ID)
+		{
+			advLogLoaded = true;
+		}
+		else if (widgetGroup == KILL_LOGS_GROUP_ID)
+		{
+			bossLogLoaded = true;
+		}
+	}
+
+	@Subscribe
+	public void onGameStateChanged(GameStateChanged event)
+	{
+		switch (event.getGameState())
+		{
+			case LOADING:
+			case HOPPING:
+				pohOwner = null;
+		}
 	}
 
 	@Subscribe
