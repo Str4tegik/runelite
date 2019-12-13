@@ -213,7 +213,7 @@ public class WorldHopperPlugin extends Plugin
 
 		overlayManager.add(worldHopperOverlay);
 
-		panel.setFilterMode(config.subscriptionFilter());
+		panel.setSubscriptionFilterMode(config.subscriptionFilter());
 
 		// The plugin has its own executor for pings, as it blocks for a long time
 		hopperExecutorService = new ExecutorServiceExceptionLogger(Executors.newSingleThreadScheduledExecutor());
@@ -276,7 +276,9 @@ public class WorldHopperPlugin extends Plugin
 					}
 					break;
 				case "subscriptionFilter":
-					panel.setFilterMode(config.subscriptionFilter());
+					panel.setSubscriptionFilterMode(config.subscriptionFilter());
+					// FALLTHROUGH
+				default:
 					updateList();
 					break;
 			}
@@ -328,6 +330,36 @@ public class WorldHopperPlugin extends Plugin
 		log.debug("Removing world {} from favorites", world.getId());
 		clearFavoriteConfig(world.getId());
 		panel.updateFavoriteMenu(world.getId(), false);
+	}
+
+	boolean isShown(EnumSet<WorldType> types)
+	{
+		return types.isEmpty() ? config.showUnrestrictedWorlds() : types.stream().allMatch(this::isShown);
+	}
+
+	private boolean isShown(WorldType worldType)
+	{
+		switch (worldType)
+		{
+			case PVP:
+				return config.showPvpWorlds();
+			case HIGH_RISK:
+				return config.showHighRiskWorld();
+			case BOUNTY:
+				return config.showBountyHunterWorlds();
+			case TOURNAMENT:
+				return config.showTournamentWorlds();
+			case DEADMAN:
+				return config.showDeadmanWorlds();
+			case LEAGUE:
+				return config.showLeagueWorlds();
+			case SKILL_TOTAL:
+				return config.showSkillTotalWorlds();
+			case MEMBERS:
+				return config.showUnrestrictedWorlds();
+			default:
+				return true;
+		}
 	}
 
 	@Subscribe
@@ -560,6 +592,13 @@ public class WorldHopperPlugin extends Plugin
 			world = worlds.get(worldIdx);
 
 			EnumSet<WorldType> types = world.getTypes().clone();
+
+			boolean matches = isShown(types);
+			if (!matches)
+			{
+				// world is filtered on the panel
+				continue;
+			}
 
 			types.remove(WorldType.BOUNTY);
 			// Treat LMS world like casual world

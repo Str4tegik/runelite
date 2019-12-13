@@ -32,6 +32,7 @@ import java.awt.GridLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -66,7 +67,7 @@ class WorldSwitcherPanel extends PluginPanel
 	private ArrayList<WorldTableRow> rows = new ArrayList<>();
 	private WorldHopperPlugin plugin;
 	@Setter(AccessLevel.PACKAGE)
-	private SubscriptionFilterMode filterMode;
+	private SubscriptionFilterMode subscriptionFilterMode;
 
 	WorldSwitcherPanel(WorldHopperPlugin plugin)
 	{
@@ -239,24 +240,31 @@ class WorldSwitcherPanel extends PluginPanel
 		for (int i = 0; i < worlds.size(); i++)
 		{
 			World world = worlds.get(i);
+			EnumSet<WorldType> types = world.getTypes();
 
-			switch (filterMode)
+			switch (subscriptionFilterMode)
 			{
 				case FREE:
-					if (world.getTypes().contains(WorldType.MEMBERS))
+					if (types.contains(WorldType.MEMBERS))
 					{
 						continue;
 					}
 					break;
 				case MEMBERS:
-					if (!world.getTypes().contains(WorldType.MEMBERS))
+					if (!types.contains(WorldType.MEMBERS))
 					{
 						continue;
 					}
 					break;
 			}
 
-			rows.add(buildRow(world, i % 2 == 0, world.getId() == plugin.getCurrentWorld() && plugin.getLastWorld() != 0, plugin.isFavorite(world)));
+			boolean matches = plugin.isShown(types);
+			if (!matches)
+			{
+				continue;
+			}
+
+			rows.add(buildRow(world, world.getId() == plugin.getCurrentWorld() && plugin.getLastWorld() != 0, plugin.isFavorite(world)));
 		}
 
 		updateList();
@@ -376,7 +384,7 @@ class WorldSwitcherPanel extends PluginPanel
 	/**
 	 * Builds a table row, that displays the world's information.
 	 */
-	private WorldTableRow buildRow(World world, boolean stripe, boolean current, boolean favorite)
+	private WorldTableRow buildRow(World world, boolean current, boolean favorite)
 	{
 		WorldTableRow row = new WorldTableRow(world, current, favorite,
 			world1 ->
@@ -397,7 +405,6 @@ class WorldSwitcherPanel extends PluginPanel
 				updateList();
 			}
 		);
-		row.setBackground(stripe ? ODD_ROW : ColorScheme.DARK_GRAY_COLOR);
 		return row;
 	}
 

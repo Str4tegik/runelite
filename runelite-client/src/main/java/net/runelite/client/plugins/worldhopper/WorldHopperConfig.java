@@ -126,10 +126,98 @@ public interface WorldHopperConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "showUnrestrictedWorlds",
+		name = "Show Unrestricted",
+		description = "Show unrestricted worlds",
+		position = 8
+	)
+	default boolean showUnrestrictedWorlds()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "showPvpWorlds",
+		name = "Show PVP",
+		description = "Show PVP worlds",
+		position = 9
+	)
+	default boolean showPvpWorlds()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "showBountyHunterWorlds",
+		name = "Show Bounty Hunter",
+		description = "Show bounty hunter worlds",
+		position = 10
+	)
+	default boolean showBountyHunterWorlds()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "showSkillTotalWorlds",
+		name = "Show Skill Total",
+		description = "Show skill total worlds",
+		position = 11
+	)
+	default boolean showSkillTotalWorlds()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "showHighRiskWorld",
+		name = "Show High Risk",
+		description = "Show high risk worlds",
+		position = 12
+	)
+	default boolean showHighRiskWorld()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "showTournamentWorlds",
+		name = "Show Tournament",
+		description = "Show Tournament worlds",
+		position = 13
+	)
+	default boolean showTournamentWorlds()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "showDeadmanWorlds",
+		name = "Show Deadman",
+		description = "Show Deadman worlds",
+		position = 14
+	)
+	default boolean showDeadmanWorlds()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "showLeagueWorlds",
+		name = "Show League",
+		description = "Show League worlds",
+		position = 15
+	)
+	default boolean showLeagueWorlds()
+	{
+		return true;
+	}
+
+	@ConfigItem(
 		keyName = "displayPing",
 		name = "Display current ping",
 		description = "Displays ping to current game world",
-		position = 7
+		position = 16
 	)
 	default boolean displayPing()
 	{
