@@ -27,6 +27,7 @@ package net.runelite.client.plugins.screenshot;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.inject.Binder;
 import com.google.inject.Provides;
 import java.awt.Desktop;
 import java.awt.Graphics;
@@ -201,6 +202,12 @@ public class ScreenshotPlugin extends Plugin
 	ScreenshotConfig getConfig(ConfigManager configManager)
 	{
 		return configManager.getConfig(ScreenshotConfig.class);
+	}
+
+	@Override
+	public void configure(Binder binder)
+	{
+		binder.bind(ScreenshotService.class).to(ScreenshotServiceImpl.class);
 	}
 
 	@Override
@@ -559,7 +566,7 @@ public class ScreenshotPlugin extends Plugin
 	 *
 	 * @param fileName    Filename to use, without file extension.
 	 */
-	private void takeScreenshot(String fileName)
+	void takeScreenshot(String fileName)
 	{
 		if (client.getGameState() == GameState.LOGIN_SCREEN)
 		{
