@@ -344,6 +344,8 @@ public class PluginManager
 			});
 
 			log.debug("Plugin {} is now running", plugin.getClass().getSimpleName());
+			plugin.running = true;
+
 			if (!isOutdated && sceneTileManager != null)
 			{
 				final GameEventManager gameEventManager = this.sceneTileManager.get();
@@ -391,6 +393,8 @@ public class PluginManager
 			});
 
 			log.debug("Plugin {} is now stopped", plugin.getClass().getSimpleName());
+			plugin.running = false;
+
 			eventBus.post(new PluginChanged(plugin, false));
 
 		}

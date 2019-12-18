@@ -27,9 +27,12 @@ package net.runelite.client.plugins;
 import com.google.inject.Binder;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import lombok.Getter;
 
 public abstract class Plugin implements Module
 {
+	@Getter
+	boolean running;
 	protected Injector injector;
 
 	@Override
