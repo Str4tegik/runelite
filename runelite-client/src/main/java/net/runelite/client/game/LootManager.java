@@ -38,12 +38,13 @@ import javax.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.AnimationID;
 import net.runelite.api.Client;
-import net.runelite.api.TileItem;
 import net.runelite.api.ItemID;
 import net.runelite.api.NPC;
+import net.runelite.api.NPCComposition;
 import net.runelite.api.NpcID;
 import net.runelite.api.Player;
 import net.runelite.api.Tile;
+import net.runelite.api.TileItem;
 import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.AnimationChanged;
@@ -51,6 +52,7 @@ import net.runelite.api.events.GameTick;
 import net.runelite.api.events.ItemDespawned;
 import net.runelite.api.events.ItemQuantityChanged;
 import net.runelite.api.events.ItemSpawned;
+import net.runelite.api.events.NpcChanged;
 import net.runelite.api.events.NpcDespawned;
 import net.runelite.api.events.PlayerDespawned;
 import net.runelite.client.eventbus.EventBus;
@@ -72,6 +74,8 @@ public class LootManager
 	private final Set<LocalPoint> killPoints = new HashSet<>();
 	private WorldPoint playerLocationLastTick;
 	private WorldPoint krakenPlayerLocation;
+	private NPC delayedNpc;
+	private WorldPoint delayedLootLocation;
 
 	@Inject
 	private LootManager(EventBus eventBus, Client client)
@@ -84,6 +88,12 @@ public class LootManager
 	public void onNpcDespawned(NpcDespawned npcDespawned)
 	{
 		final NPC npc = npcDespawned.getNpc();
+
+		if (delayedNpc == npc)
+		{
+			delayedNpc = null;
+		}
+
 		if (!npc.isDead())
 		{
 			int id = npc.getId();
@@ -121,6 +131,17 @@ public class LootManager
 		}
 
 		processNpcLoot(npc);
+	}
+
+	@Subscribe
+	public void onNpcChanged(NpcChanged npcChanged)
+	{
+		NPC npc = npcChanged.getNpc();
+		if (npc.getId() == NpcID.THE_NIGHTMARE_9433)
+		{
+			delayedNpc = npc;
+			delayedLootLocation = getAdjacentLootTile(npc);
+		}
 	}
 
 	@Subscribe
@@ -222,9 +243,41 @@ public class LootManager
 	@Subscribe
 	public void onGameTick(GameTick gameTick)
 	{
+		processDelayedLoot();
+
 		playerLocationLastTick = client.getLocalPlayer().getWorldLocation();
 		itemSpawns.clear();
 		killPoints.clear();
+	}
+
+	private void processDelayedLoot()
+	{
+		if (delayedLootLocation == null || delayedNpc == null)
+		{
+			return;
+		}
+
+		LocalPoint localPoint = LocalPoint.fromWorld(client, delayedLootLocation);
+		if (localPoint == null)
+		{
+			delayedLootLocation = null;
+			log.debug("Scene changed away from delayed loot location");
+			return;
+		}
+
+		int sceneX = localPoint.getSceneX();
+		int sceneY = localPoint.getSceneY();
+		int packed = sceneX << 8 | sceneY;
+		final List<ItemStack> itemStacks = itemSpawns.get(packed);
+		if (itemStacks.isEmpty())
+		{
+			// no loot yet
+			return;
+		}
+
+		log.debug("Got delayed loot stack from {}: {}", delayedNpc.getName(), itemStacks);
+
+		eventBus.post(new NpcLootReceived(delayedNpc, itemStacks));
 	}
 
 	private void processNpcLoot(NPC npc)
@@ -315,5 +368,34 @@ public class LootManager
 		}
 
 		return worldLocation;
+	}
+
+	private WorldPoint getAdjacentLootTile(NPC npc)
+	{
+		// offsets x & y to the npc's center, then subtract to get the correct adjacent tile
+		WorldPoint worldLocation = npc.getWorldLocation();
+		NPCComposition composition = npc.getComposition();
+
+		int centerOffset = composition.getSize() / 2; // intentional integer division
+		int x = worldLocation.getX() + centerOffset;
+		int y = worldLocation.getY() + centerOffset;
+
+		if (playerLocationLastTick.getX() < x)
+		{
+			x -= centerOffset + 1;
+		}
+		else if (playerLocationLastTick.getX() > x)
+		{
+			x += centerOffset + 1;
+		}
+		if (playerLocationLastTick.getY() < y)
+		{
+			y -= centerOffset + 1;
+		}
+		else if (playerLocationLastTick.getY() > y)
+		{
+			y += centerOffset + 1;
+		}
+		return new WorldPoint(x, y, worldLocation.getPlane());
 	}
 }
