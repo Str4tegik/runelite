@@ -89,6 +89,13 @@ public class LootManager
 	public void onNpcDespawned(NpcDespawned npcDespawned)
 	{
 		final NPC npc = npcDespawned.getNpc();
+
+		if (npc == delayedLootNpc)
+		{
+			delayedLootNpc = null;
+			delayedLootTickLimit = 0;
+		}
+
 		if (!npc.isDead())
 		{
 			int id = npc.getId();
@@ -238,7 +245,7 @@ public class LootManager
 	@Subscribe
 	public void onGameTick(GameTick gameTick)
 	{
-		if (delayedLootTickLimit-- > 0)
+		if (delayedLootNpc != null && delayedLootTickLimit-- > 0)
 		{
 			processDelayedLoot();
 		}
@@ -252,12 +259,15 @@ public class LootManager
 	{
 		WorldPoint adjacentLootTile = getAdjacentLootTile(delayedLootNpc);
 		LocalPoint localPoint = LocalPoint.fromWorld(client, adjacentLootTile);
-		log.debug("Checking worldPoint={}", adjacentLootTile);
+
 		if (localPoint == null)
 		{
 			log.debug("Scene changed away from delayed loot location");
+			delayedLootNpc = null;
+			delayedLootTickLimit = 0;
 			return;
 		}
+
 		int sceneX = localPoint.getSceneX();
 		int sceneY = localPoint.getSceneY();
 		int packed = sceneX << 8 | sceneY;
@@ -267,9 +277,12 @@ public class LootManager
 			// no loot yet
 			return;
 		}
-		log.debug("Got delayed loot stack from {}: {}", delayedLootNpc.getName(), itemStacks);
 
+		log.debug("Got delayed loot stack from {}: {}", delayedLootNpc.getName(), itemStacks);
 		eventBus.post(new NpcLootReceived(delayedLootNpc, itemStacks));
+
+		delayedLootNpc = null;
+		delayedLootTickLimit = 0;
 	}
 
 	private void processNpcLoot(NPC npc)
