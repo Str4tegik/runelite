@@ -350,25 +350,7 @@ public class LootManager
 			case NpcID.VORKATH_8059:
 			case NpcID.VORKATH_8060:
 			case NpcID.VORKATH_8061:
-				int x = worldLocation.getX() + 3;
-				int y = worldLocation.getY() + 3;
-				if (playerLocationLastTick.getX() < x)
-				{
-					x -= 4;
-				}
-				else if (playerLocationLastTick.getX() > x)
-				{
-					x += 4;
-				}
-				if (playerLocationLastTick.getY() < y)
-				{
-					y -= 4;
-				}
-				else if (playerLocationLastTick.getY() > y)
-				{
-					y += 4;
-				}
-				worldLocation = new WorldPoint(x, y, worldLocation.getPlane());
+				worldLocation = getAdjacentLootTile(npc);
 				break;
 		}
 
