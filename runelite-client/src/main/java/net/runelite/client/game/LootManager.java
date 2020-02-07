@@ -28,6 +28,7 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ListMultimap;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -75,7 +76,7 @@ public class LootManager
 	private WorldPoint playerLocationLastTick;
 	private WorldPoint krakenPlayerLocation;
 	private NPC delayedNpc;
-	private WorldPoint delayedLootLocation;
+	private List<WorldPoint> delayedLootLocations;
 
 	@Inject
 	private LootManager(EventBus eventBus, Client client)
@@ -91,7 +92,9 @@ public class LootManager
 
 		if (delayedNpc == npc)
 		{
+			log.debug("Delayed loot npc despawn: {}", npc.getName());
 			delayedNpc = null;
+			delayedLootLocations = null;
 		}
 
 		if (!npc.isDead())
@@ -140,7 +143,8 @@ public class LootManager
 		if (npc.getId() == NpcID.THE_NIGHTMARE_9433)
 		{
 			delayedNpc = npc;
-			delayedLootLocation = getAdjacentLootTile(npc);
+			delayedLootLocations = getAdjacentLootTiles(npc);
+			log.debug("Set delayed loot to {}/{}", npc.getName(), delayedLootLocations);
 		}
 	}
 
@@ -182,7 +186,7 @@ public class LootManager
 		final LocalPoint location = tile.getLocalLocation();
 		final int packed = location.getSceneX() << 8 | location.getSceneY();
 		itemSpawns.put(packed, new ItemStack(item.getId(), item.getQuantity(), location));
-		log.debug("Item spawn {} ({}) location {}", item.getId(), item.getQuantity(), location);
+		log.debug("Item spawn {} ({}) location {}", item.getId(), item.getQuantity(), tile.getWorldLocation());
 	}
 
 	@Subscribe
@@ -252,32 +256,37 @@ public class LootManager
 
 	private void processDelayedLoot()
 	{
-		if (delayedLootLocation == null || delayedNpc == null)
+		if (delayedLootLocations == null)
 		{
 			return;
 		}
 
-		LocalPoint localPoint = LocalPoint.fromWorld(client, delayedLootLocation);
-		if (localPoint == null)
+		for (WorldPoint delayedLootLocation : delayedLootLocations)
 		{
-			delayedLootLocation = null;
-			log.debug("Scene changed away from delayed loot location");
+			LocalPoint localPoint = LocalPoint.fromWorld(client, delayedLootLocation);
+			if (localPoint == null)
+			{
+				delayedLootLocations = null;
+				log.debug("Scene changed away from delayed loot location");
+				return;
+			}
+
+			int sceneX = localPoint.getSceneX();
+			int sceneY = localPoint.getSceneY();
+			int packed = sceneX << 8 | sceneY;
+			final List<ItemStack> itemStacks = itemSpawns.get(packed);
+			if (itemStacks.isEmpty())
+			{
+				// no loot yet
+				continue;
+			}
+
+			log.debug("Got delayed loot stack from {}: {}", delayedNpc.getName(), itemStacks);
+
+			eventBus.post(new NpcLootReceived(delayedNpc, itemStacks));
+			delayedLootLocations = null;
 			return;
 		}
-
-		int sceneX = localPoint.getSceneX();
-		int sceneY = localPoint.getSceneY();
-		int packed = sceneX << 8 | sceneY;
-		final List<ItemStack> itemStacks = itemSpawns.get(packed);
-		if (itemStacks.isEmpty())
-		{
-			// no loot yet
-			return;
-		}
-
-		log.debug("Got delayed loot stack from {}: {}", delayedNpc.getName(), itemStacks);
-
-		eventBus.post(new NpcLootReceived(delayedNpc, itemStacks));
 	}
 
 	private void processNpcLoot(NPC npc)
@@ -370,7 +379,7 @@ public class LootManager
 		return worldLocation;
 	}
 
-	private WorldPoint getAdjacentLootTile(NPC npc)
+	private List<WorldPoint> getAdjacentLootTiles(NPC npc)
 	{
 		// offsets x & y to the npc's center, then subtract to get the correct adjacent tile
 		WorldPoint worldLocation = npc.getWorldLocation();
@@ -379,23 +388,20 @@ public class LootManager
 		int centerOffset = composition.getSize() / 2; // intentional integer division
 		int x = worldLocation.getX() + centerOffset;
 		int y = worldLocation.getY() + centerOffset;
+		int z = worldLocation.getPlane();
 
-		if (playerLocationLastTick.getX() < x)
-		{
-			x -= centerOffset + 1;
-		}
-		else if (playerLocationLastTick.getX() > x)
-		{
-			x += centerOffset + 1;
-		}
-		if (playerLocationLastTick.getY() < y)
-		{
-			y -= centerOffset + 1;
-		}
-		else if (playerLocationLastTick.getY() > y)
-		{
-			y += centerOffset + 1;
-		}
-		return new WorldPoint(x, y, worldLocation.getPlane());
+		return Arrays.asList(
+			new WorldPoint(x - centerOffset - 1, y, z),
+			new WorldPoint(x - centerOffset - 1, y - centerOffset - 1, z),
+			new WorldPoint(x - centerOffset - 1, y + centerOffset + 1, z),
+
+			new WorldPoint(x + centerOffset + 1, y, z),
+			new WorldPoint(x + centerOffset + 1, y - centerOffset - 1, z),
+			new WorldPoint(x + centerOffset + 1, y + centerOffset + 1, z),
+
+			new WorldPoint(x, y, z),
+			new WorldPoint(x, y - centerOffset - 1, z),
+			new WorldPoint(x, y + centerOffset + 1, z)
+		);
 	}
 }
