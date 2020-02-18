@@ -36,7 +36,8 @@ import java.awt.event.ItemEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
-import java.text.DecimalFormat;
+import java.util.HashMap;
+import java.util.Map;
 import javax.inject.Inject;
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
@@ -210,6 +211,8 @@ class ConfigPanel extends PluginPanel
 	{
 		mainPanel.removeAll();
 
+		Map<Units, UnitFormatterFactory> formatterFactories = new HashMap<>();
+
 		ConfigDescriptor cd = pluginConfig.getConfigDescriptor();
 		for (ConfigItemDescriptor cid : cd.getItems())
 		{
@@ -262,11 +265,8 @@ class ConfigPanel extends PluginPanel
 				Units units = cid.getUnits();
 				if (units != null)
 				{
-					DecimalFormat df = ((JSpinner.NumberEditor) spinner.getEditor()).getFormat();
-					df.setPositiveSuffix(units.value());
-					df.setNegativeSuffix(units.value());
-					// Force update the spinner to have it add the units initially
-					spinnerTextField.setValue(value);
+					UnitFormatterFactory unitFormatterFactory = formatterFactories.computeIfAbsent(units, UnitFormatterFactory::new);
+					spinnerTextField.setFormatterFactory(unitFormatterFactory);
 				}
 
 				item.add(spinner, BorderLayout.EAST);
