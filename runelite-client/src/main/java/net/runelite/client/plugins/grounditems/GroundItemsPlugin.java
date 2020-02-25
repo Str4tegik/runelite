@@ -380,7 +380,7 @@ public class GroundItemsPlugin extends Plugin
 
 		int price = itemValue(groundItem.getGePrice(), groundItem.getHaPrice());
 
-		// Always notify for highlight color, otherwise check for a threshold being met (thus non-ignored) and over the highlight over value
+		// Always notify for highlight color, otherwise check for being over the highlighted value
 		boolean shouldNotify = config.highlightedColor().equals(highlightedColor) || (config.getHighlightOverValue() > 0 && price >= config.getHighlightOverValue());
 		if (shouldNotify)
 		{
