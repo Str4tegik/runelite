@@ -32,6 +32,7 @@ import com.google.inject.Provides;
 import java.awt.Color;
 import java.awt.Rectangle;
 import static java.lang.Boolean.TRUE;
+import static java.lang.Math.max;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -63,7 +64,6 @@ import net.runelite.api.Tile;
 import net.runelite.api.TileItem;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.ClientTick;
-import net.runelite.client.events.ConfigChanged;
 import net.runelite.api.events.FocusChanged;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.ItemDespawned;
@@ -74,6 +74,7 @@ import net.runelite.api.events.MenuOptionClicked;
 import net.runelite.client.Notifier;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.events.NpcLootReceived;
 import net.runelite.client.events.PlayerLootReceived;
 import net.runelite.client.game.ItemManager;
@@ -87,7 +88,6 @@ import net.runelite.client.plugins.grounditems.config.MenuHighlightMode;
 import static net.runelite.client.plugins.grounditems.config.MenuHighlightMode.BOTH;
 import static net.runelite.client.plugins.grounditems.config.MenuHighlightMode.NAME;
 import static net.runelite.client.plugins.grounditems.config.MenuHighlightMode.OPTION;
-import net.runelite.client.plugins.grounditems.config.ValueCalculationMode;
 import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.util.ColorUtil;
 import net.runelite.client.util.QuantityFormatter;
@@ -234,14 +234,9 @@ public class GroundItemsPlugin extends Plugin
 			// The spawn time remains set at the oldest spawn
 		}
 
-		boolean shouldNotify = !config.onlyShowLoot() && config.highlightedColor().equals(getHighlighted(
-			groundItem.getName(),
-			groundItem.getGePrice(),
-			groundItem.getHaPrice()));
-
-		if (config.notifyHighlightedDrops() && shouldNotify)
+		if (!config.onlyShowLoot())
 		{
-			notifyHighlightedItem(groundItem);
+			checkNotification(groundItem);
 		}
 	}
 
@@ -362,16 +357,34 @@ public class GroundItemsPlugin extends Plugin
 			{
 				groundItem.setLootType(lootType);
 
-				boolean shouldNotify = config.onlyShowLoot() && config.highlightedColor().equals(getHighlighted(
-					groundItem.getName(),
-					groundItem.getGePrice(),
-					groundItem.getHaPrice()));
-
-				if (config.notifyHighlightedDrops() && shouldNotify)
+				if (config.onlyShowLoot())
 				{
-					notifyHighlightedItem(groundItem);
+					checkNotification(groundItem);
 				}
 			}
+		}
+	}
+
+	private void checkNotification(GroundItem groundItem)
+	{
+		if (!config.notifyHighlightedDrops())
+		{
+			return;
+		}
+
+		Color highlightedColor = getHighlighted(groundItem.getName(), groundItem.getGePrice(), groundItem.getHaPrice());
+		if (highlightedColor == null)
+		{
+			return;
+		}
+
+		int price = itemValue(groundItem.getGePrice(), groundItem.getHaPrice());
+
+		// Always notify for highlight color, otherwise check for a threshold being met (thus non-ignored) and over the highlight over value
+		boolean shouldNotify = config.highlightedColor().equals(highlightedColor) || (config.getHighlightOverValue() > 0 && price >= config.getHighlightOverValue());
+		if (shouldNotify)
+		{
+			notifyHighlightedItem(groundItem);
 		}
 	}
 
@@ -584,33 +597,29 @@ public class GroundItemsPlugin extends Plugin
 			return null;
 		}
 
-		ValueCalculationMode mode = config.valueCalculationMode();
+		int price = itemValue(gePrice, haPrice);
 		for (Map.Entry<Integer, Color> entry : priceChecks.entrySet())
 		{
-			switch (mode)
+			if (price > entry.getKey())
 			{
-				case GE:
-					if (gePrice > entry.getKey())
-					{
-						return entry.getValue();
-					}
-					break;
-				case HA:
-					if (haPrice > entry.getKey())
-					{
-						return entry.getValue();
-					}
-					break;
-				default: // case HIGHEST
-					if (gePrice > entry.getKey() || haPrice > entry.getKey())
-					{
-						return entry.getValue();
-					}
-					break;
+				return entry.getValue();
 			}
 		}
 
 		return null;
+	}
+
+	private int itemValue(int gePrice, int haPrice)
+	{
+		switch (config.valueCalculationMode())
+		{
+			case GE:
+				return gePrice;
+			case HA:
+				return haPrice;
+			default: // case HIGHEST
+				return max(gePrice, haPrice);
+		}
 	}
 
 	Color getHidden(String item, int gePrice, int haPrice, boolean isTradeable)
