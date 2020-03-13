@@ -38,6 +38,15 @@ import net.runelite.api.Hitsplat;
 import net.runelite.api.MenuAction;
 import net.runelite.api.NPC;
 import net.runelite.api.NpcID;
+import static net.runelite.api.NpcID.THE_NIGHTMARE;
+import static net.runelite.api.NpcID.THE_NIGHTMARE_9426;
+import static net.runelite.api.NpcID.THE_NIGHTMARE_9427;
+import static net.runelite.api.NpcID.THE_NIGHTMARE_9428;
+import static net.runelite.api.NpcID.THE_NIGHTMARE_9429;
+import static net.runelite.api.NpcID.THE_NIGHTMARE_9430;
+import static net.runelite.api.NpcID.THE_NIGHTMARE_9431;
+import static net.runelite.api.NpcID.THE_NIGHTMARE_9432;
+import static net.runelite.api.NpcID.THE_NIGHTMARE_9433;
 import net.runelite.api.Player;
 import net.runelite.api.events.HitsplatApplied;
 import net.runelite.api.events.NpcDespawned;
@@ -80,7 +89,8 @@ public class DpsCounterPlugin extends Plugin
 		NpcID.XARPUS_8340, NpcID.XARPUS_8341,
 		NpcID.VERZIK_VITUR_8370,
 		NpcID.VERZIK_VITUR_8372,
-		NpcID.VERZIK_VITUR_8374
+		NpcID.VERZIK_VITUR_8374,
+		THE_NIGHTMARE, THE_NIGHTMARE_9426, THE_NIGHTMARE_9427, THE_NIGHTMARE_9428, THE_NIGHTMARE_9429, THE_NIGHTMARE_9430, THE_NIGHTMARE_9431, THE_NIGHTMARE_9432, THE_NIGHTMARE_9433
 	);
 
 	@Inject
