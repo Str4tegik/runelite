@@ -55,12 +55,13 @@ public class DpsCounterPlugin extends Plugin
 	@Inject
 	private DpsConfig dpsConfig;
 
+	@Getter(AccessLevel.PACKAGE)
 	private Boss boss;
 	private NPC bossNpc;
 	@Getter(AccessLevel.PACKAGE)
 	private final Map<String, DpsMember> members = new ConcurrentHashMap<>();
 	@Getter(AccessLevel.PACKAGE)
-	private DpsMember total = new DpsMember("Total");
+	private final DpsMember total = new DpsMember("Total");
 
 	@Provides
 	DpsConfig provideConfig(ConfigManager configManager)
@@ -71,6 +72,7 @@ public class DpsCounterPlugin extends Plugin
 	@Override
 	protected void startUp()
 	{
+		total.reset();
 		overlayManager.add(dpsOverlay);
 		wsClient.registerMessage(DpsUpdate.class);
 	}
@@ -166,11 +168,7 @@ public class DpsCounterPlugin extends Plugin
 				return;
 		}
 
-		if (total.isPaused())
-		{
-			total.unpause();
-		}
-
+		unpause();
 		total.addDamage(hitsplat.getAmount());
 	}
 
@@ -188,20 +186,10 @@ public class DpsCounterPlugin extends Plugin
 			return;
 		}
 
-//		// Hmm - not attacking the same boss I am
-//		if (bossNpc == null || dpsUpdate.getNpcId() != bossNpc.getId())
-//		{
-//			return;
-//		}
+		unpause();
 
 		DpsMember dpsMember = members.computeIfAbsent(name, DpsMember::new);
 		dpsMember.addDamage(dpsUpdate.getHit());
-
-		if (dpsMember.isPaused())
-		{
-			dpsMember.unpause();
-			log.debug("Unpausing {}", dpsMember.getName());
-		}
 	}
 
 	@Subscribe
@@ -246,7 +234,11 @@ public class DpsCounterPlugin extends Plugin
 		if (bossNpc.isDead())
 		{
 			log.debug("Boss has died!");
-			pause();
+
+			if (dpsConfig.autopause())
+			{
+				pause();
+			}
 		}
 
 		bossNpc = null;
@@ -254,10 +246,32 @@ public class DpsCounterPlugin extends Plugin
 
 	private void pause()
 	{
+		if (total.isPaused())
+		{
+			return;
+		}
+
+		log.debug("Pausing");
 		for (DpsMember dpsMember : members.values())
 		{
 			dpsMember.pause();
 		}
 		total.pause();
+	}
+
+	private void unpause()
+	{
+		if (!total.isPaused())
+		{
+			return;
+		}
+
+		log.debug("Unpausing");
+
+		for (DpsMember dpsMember : members.values())
+		{
+			dpsMember.unpause();
+		}
+		total.unpause();
 	}
 }

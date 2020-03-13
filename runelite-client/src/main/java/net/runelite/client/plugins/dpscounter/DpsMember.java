@@ -57,4 +57,9 @@ class DpsMember
 		damage = 0;
 		start = end = Instant.now();
 	}
+
+	Duration elapsed()
+	{
+		return Duration.between(start, end == null ? Instant.now() : end);
+	}
 }

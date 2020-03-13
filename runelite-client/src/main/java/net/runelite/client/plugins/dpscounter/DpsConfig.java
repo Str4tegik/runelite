@@ -17,4 +17,15 @@ public interface DpsConfig extends Config
 	{
 		return true;
 	}
+
+	@ConfigItem(
+		position = 1,
+		keyName = "autopause",
+		name = "Auto pause",
+		description = "Pause the DPS tracker when a boss dies"
+	)
+	default boolean autopause()
+	{
+		return true;
+	}
 }

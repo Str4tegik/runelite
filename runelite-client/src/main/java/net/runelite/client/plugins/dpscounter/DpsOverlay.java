@@ -3,6 +3,7 @@ package net.runelite.client.plugins.dpscounter;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.text.DecimalFormat;
+import java.time.Duration;
 import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -14,6 +15,8 @@ import net.runelite.client.ui.overlay.OverlayMenuEntry;
 import net.runelite.client.ui.overlay.components.LineComponent;
 import net.runelite.client.ui.overlay.components.PanelComponent;
 import net.runelite.client.ui.overlay.components.TitleComponent;
+import net.runelite.client.ui.overlay.tooltip.Tooltip;
+import net.runelite.client.ui.overlay.tooltip.TooltipManager;
 import net.runelite.client.ws.PartyService;
 
 class DpsOverlay extends Overlay
@@ -24,21 +27,41 @@ class DpsOverlay extends Overlay
 	private final DpsConfig dpsConfig;
 	private final PartyService partyService;
 	private final Client client;
+	private final TooltipManager tooltipManager;
 	private final boolean developerMode;
 
 	private final PanelComponent panelComponent = new PanelComponent();
 
 	@Inject
 	DpsOverlay(DpsCounterPlugin dpsCounterPlugin, DpsConfig dpsConfig, PartyService partyService, Client client,
-			   @Named("developerMode") boolean developerMode)
+			   TooltipManager tooltipManager, @Named("developerMode") boolean developerMode)
 	{
 		super(dpsCounterPlugin);
 		this.dpsCounterPlugin = dpsCounterPlugin;
 		this.dpsConfig = dpsConfig;
 		this.partyService = partyService;
 		this.client = client;
+		this.tooltipManager = tooltipManager;
 		this.developerMode = developerMode;
 		getMenuEntries().add(new OverlayMenuEntry(RUNELITE_OVERLAY, "Reset", "DPS counter"));
+	}
+
+	@Override
+	public void onMouseOver()
+	{
+		DpsMember total = dpsCounterPlugin.getTotal();
+		Duration elapsed = total.elapsed();
+		long s = elapsed.getSeconds();
+		String format;
+		if (s >= 3600)
+		{
+			format = String.format("%d:%02d:%02d", s / 3600, (s % 3600) / 60, (s % 60));
+		}
+		else
+		{
+			format = String.format("%d:%02d", s / 60, (s % 60));
+		}
+		tooltipManager.add(new Tooltip("Elapsed time: " + format));
 	}
 
 	@Override
@@ -52,20 +75,30 @@ class DpsOverlay extends Overlay
 
 		boolean inParty = !partyService.getMembers().isEmpty();
 		boolean showDamage = dpsConfig.showDamage();
+		DpsMember total = dpsCounterPlugin.getTotal();
+		boolean paused = total.isPaused();
 
 		panelComponent.getChildren().clear();
 
 		panelComponent.getChildren().add(
 			TitleComponent.builder()
-				.text(inParty ? "Party DPS" : "DPS")
+				.text((inParty ? "Party DPS" : "DPS") + (paused ? " (paused)" : ""))
 				.build());
+
+		if (developerMode && dpsCounterPlugin.getBoss() != null)
+		{
+			panelComponent.getChildren().add(
+				LineComponent.builder()
+					.left("Boss")
+					.right(dpsCounterPlugin.getBoss().name())
+					.build());
+		}
 
 		for (DpsMember dpsMember : dpsMembers.values())
 		{
-			boolean paused = dpsMember.isPaused();
 			panelComponent.getChildren().add(
 				LineComponent.builder()
-					.left(developerMode && paused ? "(P)" : dpsMember.getName())
+					.left(dpsMember.getName())
 					.right(showDamage ? Integer.toString(dpsMember.getDamage()) : DPS_FORMAT.format(dpsMember.getDps()))
 					.build());
 		}
@@ -75,7 +108,6 @@ class DpsOverlay extends Overlay
 			Player player = client.getLocalPlayer();
 			if (player.getName() != null)
 			{
-				DpsMember total = dpsCounterPlugin.getTotal();
 				DpsMember self = dpsMembers.get(player.getName());
 
 				if (self != null && total.getDamage() > self.getDamage())
