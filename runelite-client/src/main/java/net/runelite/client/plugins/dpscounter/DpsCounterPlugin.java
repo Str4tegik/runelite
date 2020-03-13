@@ -13,9 +13,6 @@ import net.runelite.api.Hitsplat;
 import net.runelite.api.MenuAction;
 import net.runelite.api.NPC;
 import net.runelite.api.Player;
-import net.runelite.api.Skill;
-import net.runelite.api.Varbits;
-import net.runelite.api.events.ExperienceChanged;
 import net.runelite.api.events.HitsplatApplied;
 import net.runelite.api.events.InteractingChanged;
 import net.runelite.api.events.NpcDespawned;
@@ -40,12 +37,6 @@ import org.apache.commons.lang3.ArrayUtils;
 @Slf4j
 public class DpsCounterPlugin extends Plugin
 {
-	private static final Varbits[] TOB_PARTY_ORBS_VARBITS = new Varbits[]{
-		Varbits.THEATRE_OF_BLOOD_ORB_1, Varbits.THEATRE_OF_BLOOD_ORB_2,
-		Varbits.THEATRE_OF_BLOOD_ORB_3, Varbits.THEATRE_OF_BLOOD_ORB_4,
-		Varbits.THEATRE_OF_BLOOD_ORB_5
-	};
-
 	@Inject
 	private Client client;
 
@@ -66,7 +57,6 @@ public class DpsCounterPlugin extends Plugin
 
 	private Boss boss;
 	private NPC bossNpc;
-	private int lastHpExp = -1;
 	@Getter(AccessLevel.PACKAGE)
 	private final Map<String, DpsMember> members = new ConcurrentHashMap<>();
 	@Getter(AccessLevel.PACKAGE)
@@ -125,58 +115,58 @@ public class DpsCounterPlugin extends Plugin
 	}
 
 	@Subscribe
-	public void onExperienceChanged(ExperienceChanged experienceChanged)
+	public void onHitsplatApplied(HitsplatApplied hitsplatApplied)
 	{
-		if (experienceChanged.getSkill() != Skill.HITPOINTS)
-		{
-			return;
-		}
-
 		Player player = client.getLocalPlayer();
-		final int xp = client.getSkillExperience(Skill.HITPOINTS);
-		if (boss == null || lastHpExp < 0 || xp <= lastHpExp || bossNpc == null || bossNpc != player.getInteracting())
+		Actor actor = hitsplatApplied.getActor();
+
+		Hitsplat hitsplat = hitsplatApplied.getHitsplat();
+
+		switch (hitsplat.getHitsplatType())
 		{
-			lastHpExp = xp;
-			return;
+			case DAMAGE_ME:
+				int hit = hitsplat.getAmount();
+				// Update local member
+				PartyMember localMember = partyService.getLocalMember();
+				// If not in a party, user local player name
+				final String name = localMember == null ? player.getName() : localMember.getName();
+				DpsMember dpsMember = members.computeIfAbsent(name, DpsMember::new);
+
+				if (dpsMember.isPaused())
+				{
+					dpsMember.unpause();
+					log.debug("Unpausing {}", dpsMember.getName());
+				}
+
+				dpsMember.addDamage(hit);
+
+				// broadcast damage
+				if (localMember != null)
+				{
+					final DpsUpdate specialCounterUpdate = new DpsUpdate(bossNpc.getId(), hit);
+					specialCounterUpdate.setMemberId(localMember.getMemberId());
+					wsClient.send(specialCounterUpdate);
+				}
+				// apply to total
+				break;
+			case DAMAGE_OTHER:
+				if (actor != player.getInteracting() && actor != bossNpc)
+				{
+					// only track damage to npcs we are attacking, or is a nearby common boss
+					return;
+				}
+				// apply to total
+				break;
+			default:
+				return;
 		}
 
-		final int delta = xp - lastHpExp;
-
-		float modifier;
-		if (boss.isTob())
+		if (total.isPaused())
 		{
-			int partySize = getTobPartySize();
-			System.out.println(partySize);
-			modifier = boss.getModifier(partySize);
-		}
-		else
-		{
-			modifier = boss.getModifier();
+			total.unpause();
 		}
 
-		final int hit = getHit(modifier, delta);
-		lastHpExp = xp;
-
-		// Update local member
-		PartyMember localMember = partyService.getLocalMember();
-		// If not in a party, user local player name
-		final String name = localMember == null ? player.getName() : localMember.getName();
-		DpsMember dpsMember = members.computeIfAbsent(name, DpsMember::new);
-
-		if (dpsMember.isPaused())
-		{
-			dpsMember.unpause();
-			log.debug("Unpausing {}", dpsMember.getName());
-		}
-
-		dpsMember.addDamage(hit);
-
-		if (hit > 0 && localMember != null)
-		{
-			final DpsUpdate specialCounterUpdate = new DpsUpdate(bossNpc.getId(), hit);
-			specialCounterUpdate.setMemberId(localMember.getMemberId());
-			wsClient.send(specialCounterUpdate);
-		}
+		total.addDamage(hitsplat.getAmount());
 	}
 
 	@Subscribe
@@ -206,29 +196,6 @@ public class DpsCounterPlugin extends Plugin
 		{
 			dpsMember.unpause();
 			log.debug("Unpausing {}", dpsMember.getName());
-		}
-	}
-
-	@Subscribe
-	public void onHitsplatApplied(HitsplatApplied hitsplatApplied)
-	{
-		Actor actor = hitsplatApplied.getActor();
-
-		if (bossNpc == actor)
-		{
-			Hitsplat hitsplat = hitsplatApplied.getHitsplat();
-
-			if (hitsplat.getHitsplatType() != Hitsplat.HitsplatType.DAMAGE)
-			{
-				return;
-			}
-
-			if (total.isPaused())
-			{
-				total.unpause();
-			}
-
-			total.addDamage(hitsplat.getAmount());
 		}
 	}
 
@@ -287,29 +254,5 @@ public class DpsCounterPlugin extends Plugin
 			dpsMember.pause();
 		}
 		total.pause();
-	}
-
-	private int getHit(float modifier, int deltaExperience)
-	{
-		float modifierBase = 1f / modifier;
-		float damageOutput = (deltaExperience * modifierBase) / 1.3333f;
-		return Math.round(damageOutput);
-	}
-
-	private int getTobPartySize()
-	{
-		int partySize = 0;
-		for (Varbits varbit : TOB_PARTY_ORBS_VARBITS)
-		{
-			if (client.getVar(varbit) != 0)
-			{
-				partySize++;
-			}
-			else
-			{
-				break;
-			}
-		}
-		return partySize;
 	}
 }

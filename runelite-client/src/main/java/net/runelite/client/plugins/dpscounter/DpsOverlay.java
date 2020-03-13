@@ -15,7 +15,7 @@ import net.runelite.client.ui.overlay.components.PanelComponent;
 import net.runelite.client.ui.overlay.components.TitleComponent;
 import net.runelite.client.ws.PartyService;
 
-public class DpsOverlay extends Overlay
+class DpsOverlay extends Overlay
 {
 	private static final DecimalFormat DPS_FORMAT = new DecimalFormat("#0.0");
 
