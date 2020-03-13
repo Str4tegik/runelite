@@ -5,6 +5,7 @@ import java.awt.Graphics2D;
 import java.text.DecimalFormat;
 import java.util.Map;
 import javax.inject.Inject;
+import javax.inject.Named;
 import net.runelite.api.Client;
 import static net.runelite.api.MenuAction.RUNELITE_OVERLAY;
 import net.runelite.api.Player;
@@ -23,17 +24,20 @@ class DpsOverlay extends Overlay
 	private final DpsConfig dpsConfig;
 	private final PartyService partyService;
 	private final Client client;
+	private final boolean developerMode;
 
 	private final PanelComponent panelComponent = new PanelComponent();
 
 	@Inject
-	DpsOverlay(DpsCounterPlugin dpsCounterPlugin, DpsConfig dpsConfig, PartyService partyService, Client client)
+	DpsOverlay(DpsCounterPlugin dpsCounterPlugin, DpsConfig dpsConfig, PartyService partyService, Client client,
+			   @Named("developerMode") boolean developerMode)
 	{
 		super(dpsCounterPlugin);
 		this.dpsCounterPlugin = dpsCounterPlugin;
 		this.dpsConfig = dpsConfig;
 		this.partyService = partyService;
 		this.client = client;
+		this.developerMode = developerMode;
 		getMenuEntries().add(new OverlayMenuEntry(RUNELITE_OVERLAY, "Reset", "DPS counter"));
 	}
 
@@ -58,9 +62,10 @@ class DpsOverlay extends Overlay
 
 		for (DpsMember dpsMember : dpsMembers.values())
 		{
+			boolean paused = dpsMember.isPaused();
 			panelComponent.getChildren().add(
 				LineComponent.builder()
-					.left(dpsMember.getName())
+					.left(developerMode && paused ? "(P)" : dpsMember.getName())
 					.right(showDamage ? Integer.toString(dpsMember.getDamage()) : DPS_FORMAT.format(dpsMember.getDps()))
 					.build());
 		}

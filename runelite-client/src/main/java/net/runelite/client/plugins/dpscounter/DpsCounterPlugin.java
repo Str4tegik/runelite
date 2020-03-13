@@ -125,7 +125,7 @@ public class DpsCounterPlugin extends Plugin
 		switch (hitsplat.getHitsplatType())
 		{
 			case DAMAGE_ME:
-				if (actor == player)
+				if (actor == player || !(actor instanceof NPC))
 				{
 					return;
 				}
@@ -148,7 +148,7 @@ public class DpsCounterPlugin extends Plugin
 				// broadcast damage
 				if (localMember != null)
 				{
-					final DpsUpdate specialCounterUpdate = new DpsUpdate(bossNpc.getId(), hit);
+					final DpsUpdate specialCounterUpdate = new DpsUpdate(((NPC) actor).getId(), hit);
 					specialCounterUpdate.setMemberId(localMember.getMemberId());
 					wsClient.send(specialCounterUpdate);
 				}
@@ -188,11 +188,11 @@ public class DpsCounterPlugin extends Plugin
 			return;
 		}
 
-		// Hmm - not attacking the same boss I am
-		if (bossNpc == null || dpsUpdate.getNpcId() != bossNpc.getId())
-		{
-			return;
-		}
+//		// Hmm - not attacking the same boss I am
+//		if (bossNpc == null || dpsUpdate.getNpcId() != bossNpc.getId())
+//		{
+//			return;
+//		}
 
 		DpsMember dpsMember = members.computeIfAbsent(name, DpsMember::new);
 		dpsMember.addDamage(dpsUpdate.getHit());
