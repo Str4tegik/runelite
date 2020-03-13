@@ -223,7 +223,7 @@ public class OverlayRenderer extends MouseAdapter implements KeyListener
 			if (!isResizeable)
 			{
 				// On fixed mode, ABOVE_CHATBOX_RIGHT is in the same location as
-				// BOTTOM_RIGHT and CANVAST_TOP_RIGHT is same as TOP_RIGHT.
+				// BOTTOM_RIGHT and CANVAS_TOP_RIGHT is same as TOP_RIGHT.
 				// Just use BOTTOM_RIGHT and TOP_RIGHT to prevent overlays from
 				// drawing over each other.
 				switch (overlayPosition)

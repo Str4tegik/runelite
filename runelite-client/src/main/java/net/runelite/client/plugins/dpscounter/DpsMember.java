@@ -10,17 +10,27 @@ import lombok.RequiredArgsConstructor;
 class DpsMember
 {
 	private final String name;
-	private Instant start = Instant.now();
+	private Instant start;
 	private Instant end;
 	private int damage;
 
 	void addDamage(int amount)
 	{
+		if (start == null)
+		{
+			start = Instant.now();
+		}
+
 		damage += amount;
 	}
 
 	float getDps()
 	{
+		if (start == null)
+		{
+			return 0;
+		}
+
 		Instant now = end == null ? Instant.now() : end;
 		int diff = (int) (now.toEpochMilli() - start.toEpochMilli()) / 1000;
 		if (diff == 0)
@@ -38,7 +48,7 @@ class DpsMember
 
 	boolean isPaused()
 	{
-		return end != null;
+		return start == null || end != null;
 	}
 
 	void unpause()
