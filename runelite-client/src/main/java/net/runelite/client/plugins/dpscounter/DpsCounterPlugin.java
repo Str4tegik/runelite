@@ -24,6 +24,7 @@
  */
 package net.runelite.client.plugins.dpscounter;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.inject.Provides;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -36,11 +37,10 @@ import net.runelite.api.Client;
 import net.runelite.api.Hitsplat;
 import net.runelite.api.MenuAction;
 import net.runelite.api.NPC;
+import net.runelite.api.NpcID;
 import net.runelite.api.Player;
 import net.runelite.api.events.HitsplatApplied;
-import net.runelite.api.events.InteractingChanged;
 import net.runelite.api.events.NpcDespawned;
-import net.runelite.api.events.NpcSpawned;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.OverlayMenuClicked;
@@ -51,7 +51,6 @@ import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.ws.PartyMember;
 import net.runelite.client.ws.PartyService;
 import net.runelite.client.ws.WSClient;
-import org.apache.commons.lang3.ArrayUtils;
 
 @PluginDescriptor(
 	name = "DPS Counter",
@@ -61,6 +60,29 @@ import org.apache.commons.lang3.ArrayUtils;
 @Slf4j
 public class DpsCounterPlugin extends Plugin
 {
+	private static final ImmutableSet<Integer> BOSSES = ImmutableSet.of(
+		NpcID.ABYSSAL_SIRE, NpcID.ABYSSAL_SIRE_5887, NpcID.ABYSSAL_SIRE_5888, NpcID.ABYSSAL_SIRE_5889, NpcID.ABYSSAL_SIRE_5890, NpcID.ABYSSAL_SIRE_5891, NpcID.ABYSSAL_SIRE_5908,
+		NpcID.CALLISTO, NpcID.CALLISTO_6609,
+		NpcID.CERBERUS, NpcID.CERBERUS_5863, NpcID.CERBERUS_5866,
+		NpcID.CHAOS_ELEMENTAL, NpcID.CHAOS_ELEMENTAL_6505,
+		NpcID.CORPOREAL_BEAST,
+		NpcID.GENERAL_GRAARDOR, NpcID.GENERAL_GRAARDOR_6494,
+		NpcID.GIANT_MOLE, NpcID.GIANT_MOLE_6499,
+		NpcID.KALPHITE_QUEEN, NpcID.KALPHITE_QUEEN_963, NpcID.KALPHITE_QUEEN_965, NpcID.KALPHITE_QUEEN_4303, NpcID.KALPHITE_QUEEN_4304, NpcID.KALPHITE_QUEEN_6500, NpcID.KALPHITE_QUEEN_6501,
+		NpcID.KING_BLACK_DRAGON, NpcID.KING_BLACK_DRAGON_2642, NpcID.KING_BLACK_DRAGON_6502,
+		NpcID.KRIL_TSUTSAROTH, NpcID.KRIL_TSUTSAROTH_6495,
+		NpcID.VENENATIS, NpcID.VENENATIS_6610,
+		NpcID.VETION, NpcID.VETION_REBORN,
+		NpcID.THE_MAIDEN_OF_SUGADINTI, NpcID.THE_MAIDEN_OF_SUGADINTI_8361, NpcID.THE_MAIDEN_OF_SUGADINTI_8362, NpcID.THE_MAIDEN_OF_SUGADINTI_8363, NpcID.THE_MAIDEN_OF_SUGADINTI_8364, NpcID.THE_MAIDEN_OF_SUGADINTI_8365,
+		NpcID.PESTILENT_BLOAT,
+		NpcID.NYLOCAS_VASILIAS, NpcID.NYLOCAS_VASILIAS_8355, NpcID.NYLOCAS_VASILIAS_8356, NpcID.NYLOCAS_VASILIAS_8357,
+		NpcID.SOTETSEG, NpcID.SOTETSEG_8388,
+		NpcID.XARPUS_8340, NpcID.XARPUS_8341,
+		NpcID.VERZIK_VITUR_8370,
+		NpcID.VERZIK_VITUR_8372,
+		NpcID.VERZIK_VITUR_8374
+	);
+
 	@Inject
 	private Client client;
 
@@ -79,9 +101,6 @@ public class DpsCounterPlugin extends Plugin
 	@Inject
 	private DpsConfig dpsConfig;
 
-	@Getter(AccessLevel.PACKAGE)
-	private Boss boss;
-	private NPC bossNpc;
 	@Getter(AccessLevel.PACKAGE)
 	private final Map<String, DpsMember> members = new ConcurrentHashMap<>();
 	@Getter(AccessLevel.PACKAGE)
@@ -107,7 +126,6 @@ public class DpsCounterPlugin extends Plugin
 		wsClient.unregisterMessage(DpsUpdate.class);
 		overlayManager.remove(dpsOverlay);
 		members.clear();
-		boss = null;
 	}
 
 	@Subscribe
@@ -117,45 +135,20 @@ public class DpsCounterPlugin extends Plugin
 	}
 
 	@Subscribe
-	public void onInteractingChanged(InteractingChanged interactingChanged)
-	{
-		Actor source = interactingChanged.getSource();
-		Actor target = interactingChanged.getTarget();
-
-		if (source != client.getLocalPlayer())
-		{
-			return;
-		}
-
-		if (target instanceof NPC)
-		{
-			NPC npc = (NPC) target;
-			int npcId = npc.getId();
-			Boss boss = Boss.findBoss(npcId);
-			if (boss != null)
-			{
-				this.boss = boss;
-				bossNpc = (NPC) target;
-			}
-		}
-	}
-
-	@Subscribe
 	public void onHitsplatApplied(HitsplatApplied hitsplatApplied)
 	{
 		Player player = client.getLocalPlayer();
 		Actor actor = hitsplatApplied.getActor();
+		if (!(actor instanceof NPC))
+		{
+			return;
+		}
 
 		Hitsplat hitsplat = hitsplatApplied.getHitsplat();
 
 		switch (hitsplat.getHitsplatType())
 		{
 			case DAMAGE_ME:
-				if (actor == player || !(actor instanceof NPC))
-				{
-					return;
-				}
-
 				int hit = hitsplat.getAmount();
 				// Update local member
 				PartyMember localMember = partyService.getLocalMember();
@@ -181,7 +174,9 @@ public class DpsCounterPlugin extends Plugin
 				// apply to total
 				break;
 			case DAMAGE_OTHER:
-				if (actor != player.getInteracting() && actor != bossNpc)
+				final int npcId = ((NPC) actor).getId();
+				boolean isBoss = BOSSES.contains(npcId);
+				if (actor != player.getInteracting() && !isBoss)
 				{
 					// only track damage to npcs we are attacking, or is a nearby common boss
 					return;
@@ -229,33 +224,11 @@ public class DpsCounterPlugin extends Plugin
 	}
 
 	@Subscribe
-	public void onNpcSpawned(NpcSpawned npcSpawned)
-	{
-		if (boss == null)
-		{
-			return;
-		}
-
-		NPC npc = npcSpawned.getNpc();
-		int npcId = npc.getId();
-		if (!ArrayUtils.contains(boss.getIds(), npcId))
-		{
-			return;
-		}
-
-		log.debug("Boss has spawned!");
-		bossNpc = npc;
-	}
-
-	@Subscribe
 	public void onNpcDespawned(NpcDespawned npcDespawned)
 	{
-		if (npcDespawned.getNpc() != bossNpc)
-		{
-			return;
-		}
+		NPC npc = npcDespawned.getNpc();
 
-		if (bossNpc.isDead())
+		if (npc.isDead() && BOSSES.contains(npc.getId()))
 		{
 			log.debug("Boss has died!");
 
@@ -264,8 +237,6 @@ public class DpsCounterPlugin extends Plugin
 				pause();
 			}
 		}
-
-		bossNpc = null;
 	}
 
 	private void pause()

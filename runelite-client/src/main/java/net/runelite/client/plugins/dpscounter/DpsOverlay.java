@@ -30,7 +30,6 @@ import java.text.DecimalFormat;
 import java.time.Duration;
 import java.util.Map;
 import javax.inject.Inject;
-import javax.inject.Named;
 import net.runelite.api.Client;
 import static net.runelite.api.MenuAction.RUNELITE_OVERLAY;
 import net.runelite.api.Player;
@@ -52,13 +51,12 @@ class DpsOverlay extends Overlay
 	private final PartyService partyService;
 	private final Client client;
 	private final TooltipManager tooltipManager;
-	private final boolean developerMode;
 
 	private final PanelComponent panelComponent = new PanelComponent();
 
 	@Inject
 	DpsOverlay(DpsCounterPlugin dpsCounterPlugin, DpsConfig dpsConfig, PartyService partyService, Client client,
-			   TooltipManager tooltipManager, @Named("developerMode") boolean developerMode)
+			   TooltipManager tooltipManager)
 	{
 		super(dpsCounterPlugin);
 		this.dpsCounterPlugin = dpsCounterPlugin;
@@ -66,7 +64,6 @@ class DpsOverlay extends Overlay
 		this.partyService = partyService;
 		this.client = client;
 		this.tooltipManager = tooltipManager;
-		this.developerMode = developerMode;
 		getMenuEntries().add(new OverlayMenuEntry(RUNELITE_OVERLAY, "Reset", "DPS counter"));
 	}
 
@@ -108,15 +105,6 @@ class DpsOverlay extends Overlay
 			TitleComponent.builder()
 				.text((inParty ? "Party DPS" : "DPS") + (paused ? " (paused)" : ""))
 				.build());
-
-		if (developerMode && dpsCounterPlugin.getBoss() != null)
-		{
-			panelComponent.getChildren().add(
-				LineComponent.builder()
-					.left("Boss")
-					.right(dpsCounterPlugin.getBoss().name())
-					.build());
-		}
 
 		for (DpsMember dpsMember : dpsMembers.values())
 		{
