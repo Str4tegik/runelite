@@ -125,6 +125,11 @@ public class DpsCounterPlugin extends Plugin
 		switch (hitsplat.getHitsplatType())
 		{
 			case DAMAGE_ME:
+				if (actor == player)
+				{
+					return;
+				}
+
 				int hit = hitsplat.getAmount();
 				// Update local member
 				PartyMember localMember = partyService.getLocalMember();
