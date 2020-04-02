@@ -49,6 +49,7 @@ import javax.inject.Singleton;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
+import javax.sound.sampled.LineEvent;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
 import lombok.Getter;
@@ -410,8 +411,6 @@ public class Notifier
 
 	private void playCustomSound()
 	{
-		Clip clip = null;
-
 		// Try to load the user sound from ~/.runelite/notification.wav
 		File file = new File(RuneLite.RUNELITE_DIR, "notification.wav");
 		if (file.exists())
@@ -421,34 +420,39 @@ public class Notifier
 				InputStream fileStream = new BufferedInputStream(new FileInputStream(file));
 				try (AudioInputStream sound = AudioSystem.getAudioInputStream(fileStream))
 				{
-					clip = AudioSystem.getClip();
+					Clip clip = AudioSystem.getClip();
 					clip.open(sound);
+					clip.addLineListener(this::clipCloser);
+					clip.start();
+					return;
 				}
 			}
 			catch (UnsupportedAudioFileException | IOException | LineUnavailableException e)
 			{
-				clip = null;
 				log.warn("Unable to play notification sound", e);
 			}
 		}
 
-		if (clip == null)
+		// Otherwise load from the classpath
+		InputStream fileStream = new BufferedInputStream(Notifier.class.getResourceAsStream("notification.wav"));
+		try (AudioInputStream sound = AudioSystem.getAudioInputStream(fileStream))
 		{
-			// Otherwise load from the classpath
-			InputStream fileStream = new BufferedInputStream(Notifier.class.getResourceAsStream("notification.wav"));
-			try (AudioInputStream sound = AudioSystem.getAudioInputStream(fileStream))
-			{
-				clip = AudioSystem.getClip();
-				clip.open(sound);
-			}
-			catch (UnsupportedAudioFileException | IOException | LineUnavailableException e)
-			{
-				log.warn("Unable to play builtin notification sound", e);
-
-				Toolkit.getDefaultToolkit().beep();
-				return;
-			}
+			Clip clip = AudioSystem.getClip();
+			clip.open(sound);
+			clip.addLineListener(this::clipCloser);
+			clip.start();
 		}
-		clip.start();
+		catch (UnsupportedAudioFileException | IOException | LineUnavailableException e)
+		{
+			log.warn("Unable to play builtin notification sound", e);
+
+			Toolkit.getDefaultToolkit().beep();
+		}
+	}
+
+	private void clipCloser(LineEvent event) {
+		if (event.getType() == LineEvent.Type.STOP) {
+			event.getLine().close();
+		}
 	}
 }
