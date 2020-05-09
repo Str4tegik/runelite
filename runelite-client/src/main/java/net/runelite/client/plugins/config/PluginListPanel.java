@@ -24,6 +24,7 @@
  */
 package net.runelite.client.plugins.config;
 
+import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableList;
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -32,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -46,6 +48,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import com.google.common.collect.Table;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.config.Config;
@@ -101,6 +104,7 @@ class PluginListPanel extends PluginPanel
 	private final JScrollPane scrollPane;
 	private final FixedWidthPanel mainPanel;
 	private List<PluginListItem> pluginList;
+	private final Table<String, String, Boolean> sectionExpandStates = HashBasedTable.create();
 
 	@Inject
 	public PluginListPanel(
@@ -327,8 +331,7 @@ class PluginListPanel extends PluginPanel
 		try
 		{
 			pluginManager.startPlugin(plugin);
-		}
-		catch (PluginInstantiationException ex)
+		} catch (PluginInstantiationException ex)
 		{
 			log.warn("Error when starting plugin {}", plugin.getClass().getSimpleName(), ex);
 		}
@@ -341,8 +344,7 @@ class PluginListPanel extends PluginPanel
 		try
 		{
 			pluginManager.stopPlugin(plugin);
-		}
-		catch (PluginInstantiationException ex)
+		} catch (PluginInstantiationException ex)
 		{
 			log.warn("Error when stopping plugin {}", plugin.getClass().getSimpleName(), ex);
 		}
@@ -397,5 +399,15 @@ class PluginListPanel extends PluginPanel
 	private void onExternalPluginsChanged(ExternalPluginsChanged ev)
 	{
 		SwingUtilities.invokeLater(this::rebuildPluginList);
+	}
+
+	public Optional<Boolean> getConfigSectionExpandState(String pluginGroup, String sectionKey)
+	{
+		return Optional.ofNullable(sectionExpandStates.get(pluginGroup, sectionKey));
+	}
+
+	public void setConfigSectionExpandState(String pluginGroup, String sectionKey, boolean state)
+	{
+		sectionExpandStates.put(pluginGroup, sectionKey, state);
 	}
 }
