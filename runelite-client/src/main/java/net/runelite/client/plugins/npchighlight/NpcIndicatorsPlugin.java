@@ -321,7 +321,8 @@ public class NpcIndicatorsPlugin extends Plugin
 			return;
 		}
 
-		if (memorizedNpcs.containsKey(npc.getIndex()))
+		MemorizedNpc memorizedNpc = memorizedNpcs.get(npc.getIndex());
+		if (memorizedNpc != null && memorizedNpc.getNpcId() == npc.getId())
 		{
 			highlightedNpcs.add(npc);
 			spawnedNpcsThisTick.add(npc);
@@ -466,7 +467,8 @@ public class NpcIndicatorsPlugin extends Plugin
 				continue;
 			}
 
-			if (memorizedNpcs.containsKey(npc.getIndex()))
+			MemorizedNpc memorizedNpc = memorizedNpcs.get(npc.getIndex());
+			if (memorizedNpc != null && memorizedNpc.getNpcId() == npc.getId())
 			{
 				highlightedNpcs.add(npc);
 				continue;

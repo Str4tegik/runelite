@@ -32,32 +32,26 @@ import net.runelite.api.NPC;
 import net.runelite.api.NPCComposition;
 import net.runelite.api.coords.WorldPoint;
 
+@Getter
 class MemorizedNpc
 {
-	@Getter
-	private int npcIndex;
-
-	@Getter
-	private String npcName;
-
-	@Getter
+	private final int npcIndex;
+	private final int npcId;
+	private final String npcName;
 	private int npcSize;
 
 	/**
 	 * The time the npc died at, in game ticks, relative to the tick counter
 	 */
-	@Getter
 	@Setter
 	private int diedOnTick;
 
 	/**
 	 * The time it takes for the npc to respawn, in game ticks
 	 */
-	@Getter
 	@Setter
 	private int respawnTime;
 
-	@Getter
 	@Setter
 	private List<WorldPoint> possibleRespawnLocations;
 
@@ -65,6 +59,7 @@ class MemorizedNpc
 	{
 		this.npcName = npc.getName();
 		this.npcIndex = npc.getIndex();
+		this.npcId = npc.getId();
 		this.possibleRespawnLocations = new ArrayList<>();
 		this.respawnTime = -1;
 		this.diedOnTick = -1;
