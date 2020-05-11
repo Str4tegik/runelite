@@ -145,11 +145,6 @@ public class NpcIndicatorsPlugin extends Plugin
 	private List<String> highlights = new ArrayList<>();
 
 	/**
-	 * NPC ids marked with the Tag option
-	 */
-	private final Set<Integer> npcTags = new HashSet<>();
-
-	/**
 	 * Tagged NPCs that spawned this tick, which need to be verified that
 	 * they actually spawned and didn't just walk into view range.
 	 */
@@ -208,7 +203,6 @@ public class NpcIndicatorsPlugin extends Plugin
 		spawnedNpcsThisTick.clear();
 		despawnedNpcsThisTick.clear();
 		teleportGraphicsObjectSpawnedThisTick.clear();
-		npcTags.clear();
 		highlightedNpcs.clear();
 		keyManager.unregisterKeyListener(inputListener);
 	}
@@ -294,7 +288,6 @@ public class NpcIndicatorsPlugin extends Plugin
 		}
 
 		final int id = click.getId();
-		final boolean removed = npcTags.remove(id);
 		final NPC[] cachedNPCs = client.getCachedNPCs();
 		final NPC npc = cachedNPCs[id];
 
@@ -303,15 +296,14 @@ public class NpcIndicatorsPlugin extends Plugin
 			return;
 		}
 
-		if (removed)
+		MemorizedNpc removedNpc = memorizedNpcs.remove(id);
+		if (removedNpc != null)
 		{
 			highlightedNpcs.remove(npc);
-			memorizedNpcs.remove(npc.getIndex());
 		}
 		else
 		{
 			memorizeNpc(npc);
-			npcTags.add(id);
 			highlightedNpcs.add(npc);
 		}
 
@@ -329,9 +321,8 @@ public class NpcIndicatorsPlugin extends Plugin
 			return;
 		}
 
-		if (npcTags.contains(npc.getIndex()))
+		if (memorizedNpcs.containsKey(npc.getIndex()))
 		{
-			memorizeNpc(npc);
 			highlightedNpcs.add(npc);
 			spawnedNpcsThisTick.add(npc);
 			return;
@@ -432,7 +423,7 @@ public class NpcIndicatorsPlugin extends Plugin
 	private void memorizeNpc(NPC npc)
 	{
 		final int npcIndex = npc.getIndex();
-		memorizedNpcs.putIfAbsent(npcIndex, new MemorizedNpc(npc));
+		memorizedNpcs.put(npcIndex, new MemorizedNpc(npc));
 	}
 
 	private void removeOldHighlightedRespawns()
@@ -475,7 +466,7 @@ public class NpcIndicatorsPlugin extends Plugin
 				continue;
 			}
 
-			if (npcTags.contains(npc.getIndex()))
+			if (memorizedNpcs.containsKey(npc.getIndex()))
 			{
 				highlightedNpcs.add(npc);
 				continue;
