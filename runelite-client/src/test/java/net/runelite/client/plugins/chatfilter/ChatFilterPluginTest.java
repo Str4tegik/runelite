@@ -28,12 +28,14 @@ package net.runelite.client.plugins.chatfilter;
 import com.google.inject.Guice;
 import com.google.inject.testing.fieldbinder.Bind;
 import com.google.inject.testing.fieldbinder.BoundFieldModule;
+import java.util.concurrent.ExecutionException;
 import javax.inject.Inject;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.IterableHashTable;
 import net.runelite.api.MessageNode;
 import net.runelite.api.Player;
+import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.ScriptCallbackEvent;
 import net.runelite.client.game.ClanManager;
 import static net.runelite.client.plugins.chatfilter.ChatFilterPlugin.CENSOR_MESSAGE;
@@ -105,6 +107,13 @@ public class ChatFilterPluginTest
 	{
 		MessageNode node = mock(MessageNode.class);
 		when(node.getName()).thenReturn(sender);
+		return node;
+	}
+
+	private MessageNode mockMessageNode(int id)
+	{
+		MessageNode node = mock(MessageNode.class);
+		when(node.getId()).thenReturn(id);
 		return node;
 	}
 
@@ -321,5 +330,72 @@ public class ChatFilterPluginTest
 		ScriptCallbackEvent event = createCallbackEvent("Adam", "please filterme plugin", ChatMessageType.PUBLICCHAT);
 		chatFilterPlugin.onScriptCallbackEvent(event);
 		assertEquals(CENSOR_MESSAGE, client.getStringStack()[client.getStringStackSize() - 1]);
+	}
+
+	@Test
+	public void testDuplicateChatFiltered() throws ExecutionException
+	{
+		when(chatFilterConfig.collapseGameChat()).thenReturn(true);
+		chatFilterPlugin.onChatMessage(new ChatMessage(mockMessageNode(0), ChatMessageType.GAMEMESSAGE, null, "testMessage", null, 0));
+		ScriptCallbackEvent event = createCallbackEvent(null, "testMessage", ChatMessageType.GAMEMESSAGE);
+		chatFilterPlugin.onScriptCallbackEvent(event);
+
+		assertEquals(0, client.getIntStack()[client.getIntStackSize() - 3]);
+	}
+
+	@Test
+	public void testNoDuplicate() throws ExecutionException
+	{
+		when(chatFilterConfig.collapseGameChat()).thenReturn(true);
+		chatFilterPlugin.onChatMessage(new ChatMessage(mockMessageNode(1), ChatMessageType.GAMEMESSAGE, null, "testMessage", null, 0));
+		ScriptCallbackEvent event = createCallbackEvent(null, "testMessage", ChatMessageType.GAMEMESSAGE);
+		chatFilterPlugin.onScriptCallbackEvent(event);
+
+		assertEquals(1, client.getIntStack()[client.getIntStackSize() - 3]);
+		assertEquals("testMessage", client.getStringStack()[client.getStringStackSize() - 1]);
+	}
+
+	@Test
+	public void testDuplicateChatCount() throws ExecutionException
+	{
+		when(chatFilterConfig.collapseGameChat()).thenReturn(true);
+		chatFilterPlugin.onChatMessage(new ChatMessage(mockMessageNode(4), ChatMessageType.GAMEMESSAGE, null, "testMessage", null, 0));
+		chatFilterPlugin.onChatMessage(new ChatMessage(mockMessageNode(3), ChatMessageType.GAMEMESSAGE, null, "testMessage", null, 0));
+		chatFilterPlugin.onChatMessage(new ChatMessage(mockMessageNode(2), ChatMessageType.GAMEMESSAGE, null, "testMessage", null, 0));
+		chatFilterPlugin.onChatMessage(new ChatMessage(mockMessageNode(1), ChatMessageType.GAMEMESSAGE, null, "testMessage", null, 0));
+		ScriptCallbackEvent event = createCallbackEvent(null, "testMessage", ChatMessageType.GAMEMESSAGE);
+		chatFilterPlugin.onScriptCallbackEvent(event);
+
+		assertEquals(1, client.getIntStack()[client.getIntStackSize() - 3]);
+		assertEquals("testMessage (4)", client.getStringStack()[client.getStringStackSize() - 1]);
+	}
+
+	@Test
+	public void gameChatNotFilteredOnConfig() throws ExecutionException
+	{
+		chatFilterPlugin.onChatMessage(new ChatMessage(mockMessageNode(null), ChatMessageType.GAMEMESSAGE, null, "testMessage", null, 0));
+		chatFilterPlugin.onChatMessage(new ChatMessage(mockMessageNode(null), ChatMessageType.GAMEMESSAGE, null, "testMessage", null, 0));
+		chatFilterPlugin.onChatMessage(new ChatMessage(mockMessageNode(null), ChatMessageType.GAMEMESSAGE, null, "testMessage", null, 0));
+		chatFilterPlugin.onChatMessage(new ChatMessage(mockMessageNode(null), ChatMessageType.GAMEMESSAGE, null, "testMessage", null, 0));
+		ScriptCallbackEvent event = createCallbackEvent(null, "testMessage", ChatMessageType.GAMEMESSAGE);
+		chatFilterPlugin.onScriptCallbackEvent(event);
+
+		assertEquals(1, client.getIntStack()[client.getIntStackSize() - 3]);
+		assertEquals("testMessage", client.getStringStack()[client.getStringStackSize() - 1]);
+	}
+
+	@Test
+	public void playerChatNotFilteredOnConfig() throws ExecutionException
+	{
+		when(chatFilterConfig.collapsePlayerChat()).thenReturn(false);
+		chatFilterPlugin.onChatMessage(new ChatMessage(mockMessageNode("somePlayer"), ChatMessageType.PUBLICCHAT, null, "testMessage", null, 0));
+		chatFilterPlugin.onChatMessage(new ChatMessage(mockMessageNode("somePlayer"), ChatMessageType.PUBLICCHAT, null, "testMessage", null, 0));
+		chatFilterPlugin.onChatMessage(new ChatMessage(mockMessageNode("somePlayer"), ChatMessageType.PUBLICCHAT, null, "testMessage", null, 0));
+		chatFilterPlugin.onChatMessage(new ChatMessage(mockMessageNode("somePlayer"), ChatMessageType.PUBLICCHAT, null, "testMessage", null, 0));
+		ScriptCallbackEvent event = createCallbackEvent("somePlayer", "testMessage", ChatMessageType.PUBLICCHAT);
+		chatFilterPlugin.onScriptCallbackEvent(event);
+
+		assertEquals(1, client.getIntStack()[client.getIntStackSize() - 3]);
+		assertEquals("testMessage", client.getStringStack()[client.getStringStackSize() - 1]);
 	}
 }
