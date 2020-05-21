@@ -28,13 +28,13 @@ package net.runelite.client.plugins.chatfilter;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Splitter;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.LinkedListMultimap;
-import com.google.common.collect.ListMultimap;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.google.inject.Provides;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -81,7 +81,17 @@ public class ChatFilterPlugin extends Plugin
 	private final CharMatcher jagexPrintableCharMatcher = Text.JAGEX_PRINTABLE_CHAR_MATCHER;
 	private final List<Pattern> filteredPatterns = new ArrayList<>();
 	private final List<Pattern> filteredNamePatterns = new ArrayList<>();
-	private ListMultimap<String, Integer> duplicateChatCache = LinkedListMultimap.create();
+
+	static class Duplicate
+	{
+		int messageId;
+		int count;
+	}
+
+	private final Cache<String, Duplicate> duplicateChatCache = CacheBuilder.newBuilder()
+		.maximumSize(1000L)
+		.concurrencyLevel(1)
+		.build();
 
 	@Inject
 	private Client client;
@@ -109,7 +119,7 @@ public class ChatFilterPlugin extends Plugin
 	protected void shutDown() throws Exception
 	{
 		filteredPatterns.clear();
-		duplicateChatCache.clear();
+		duplicateChatCache.invalidateAll();
 		client.refreshChat();
 	}
 
@@ -136,9 +146,12 @@ public class ChatFilterPlugin extends Plugin
 
 		if (shouldCollapseMessageType(chatMessageType))
 		{
-			shouldBlockMessage = duplicateChatCache.containsKey(fullMessage) &&
-					Iterables.getLast(duplicateChatCache.get(fullMessage)) != messageId ||
-					shouldBlockDuplicatePlayerChat(fullMessage, chatMessageType);
+			Duplicate duplicate = duplicateChatCache.getIfPresent(fullMessage);
+			if (duplicate != null)
+			{
+				shouldBlockMessage = duplicate.messageId != messageId || // always block duplicates if it isn't the most recent
+					(chatMessageType == ChatMessageType.PUBLICCHAT && config.maxRepeatedPublicChats() > 1 && duplicate.count > config.maxRepeatedPublicChats()); // otherwise ?
+			}
 		}
 
 		// Only filter public chat and private messages
@@ -160,10 +173,10 @@ public class ChatFilterPlugin extends Plugin
 		else
 		{
 			// Replace the message
-			int count = duplicateChatCache.get(fullMessage).size();
-			if (count > 1)
+			Duplicate duplicate = duplicateChatCache.getIfPresent(fullMessage);
+			if (duplicate != null && duplicate.count > 1)
 			{
-				message += ColorUtil.wrapWithColorTag(String.format(COUNT_FORMAT, count), config.chatCountColor());
+				message += ColorUtil.wrapWithColorTag(String.format(COUNT_FORMAT, duplicate.count), config.chatCountColor());
 			}
 			stringStack[stringStackSize - 1] = message;
 		}
@@ -303,20 +316,13 @@ public class ChatFilterPlugin extends Plugin
 	}
 
 	@Subscribe
-	public void onChatMessage(ChatMessage chatMessage)
+	public void onChatMessage(ChatMessage chatMessage) throws ExecutionException
 	{
 		if (shouldCollapseMessageType(chatMessage.getType()))
 		{
-			duplicateChatCache.put(chatMessage.getName() + chatMessage.getMessage(), chatMessage.getMessageNode().getId());
-		}
-		// Cleanup cache if above max size
-		if (duplicateChatCache.keySet().size() > CACHE_HIGH_WATERMARK)
-		{
-			duplicateChatCache.keySet().removeIf(key -> duplicateChatCache.get(key).size() <= 1);
-			if (duplicateChatCache.keySet().size() > CACHE_LOW_WATERMARK)
-			{
-				duplicateChatCache.clear();
-			}
+			Duplicate duplicate = duplicateChatCache.get(chatMessage.getName() + chatMessage.getMessage(), Duplicate::new);
+			duplicate.messageId = chatMessage.getMessageNode().getId();
+			duplicate.count++;
 		}
 	}
 
@@ -325,7 +331,7 @@ public class ChatFilterPlugin extends Plugin
 	{
 		if (event.getGameState() == GameState.HOPPING || event.getGameState() == GameState.LOGIN_SCREEN)
 		{
-			duplicateChatCache.clear();
+			duplicateChatCache.invalidateAll();
 		}
 	}
 
@@ -362,12 +368,4 @@ public class ChatFilterPlugin extends Plugin
 				return false;
 		}
 	}
-
-	private boolean shouldBlockDuplicatePlayerChat(String fullMessage, ChatMessageType chatMessageType)
-	{
-		return chatMessageType == ChatMessageType.PUBLICCHAT &&
-				config.maxRepeatedPublicChats() > 1 &&
-				duplicateChatCache.get(fullMessage).size() > config.maxRepeatedPublicChats();
-	}
-
 }

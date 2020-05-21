@@ -29,6 +29,7 @@ import com.google.inject.Guice;
 import com.google.inject.testing.fieldbinder.Bind;
 import com.google.inject.testing.fieldbinder.BoundFieldModule;
 import java.awt.Color;
+import java.util.concurrent.ExecutionException;
 import javax.inject.Inject;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
@@ -333,7 +334,7 @@ public class ChatFilterPluginTest
 	}
 
 	@Test
-	public void testDuplicateChatFiltered()
+	public void testDuplicateChatFiltered() throws ExecutionException
 	{
 		when(chatFilterConfig.collapseGameChat()).thenReturn(true);
 		chatFilterPlugin.onChatMessage(new ChatMessage(mockMessageNode(0), ChatMessageType.GAMEMESSAGE, null, "testMessage", null, 0));
@@ -344,7 +345,7 @@ public class ChatFilterPluginTest
 	}
 
 	@Test
-	public void testNoDuplicate()
+	public void testNoDuplicate() throws ExecutionException
 	{
 		when(chatFilterConfig.collapseGameChat()).thenReturn(true);
 		chatFilterPlugin.onChatMessage(new ChatMessage(mockMessageNode(1), ChatMessageType.GAMEMESSAGE, null, "testMessage", null, 0));
@@ -356,7 +357,7 @@ public class ChatFilterPluginTest
 	}
 
 	@Test
-	public void testDuplicateChatCount()
+	public void testDuplicateChatCount() throws ExecutionException
 	{
 		when(chatFilterConfig.collapseGameChat()).thenReturn(true);
 		when(chatFilterConfig.chatCountColor()).thenReturn(Color.WHITE);
@@ -372,7 +373,7 @@ public class ChatFilterPluginTest
 	}
 
 	@Test
-	public void playerChatNotFilteredOnConfig()
+	public void playerChatNotFilteredOnConfig() throws ExecutionException
 	{
 		when(chatFilterConfig.collapsePlayerChat()).thenReturn(false);
 		chatFilterPlugin.onChatMessage(new ChatMessage(mockMessageNode("somePlayer"), ChatMessageType.PUBLICCHAT, null, "testMessage", null, 0));
@@ -387,7 +388,7 @@ public class ChatFilterPluginTest
 	}
 
 	@Test
-	public void gameChatNotFilteredOnConfig()
+	public void gameChatNotFilteredOnConfig() throws ExecutionException
 	{
 		chatFilterPlugin.onChatMessage(new ChatMessage(mockMessageNode(null), ChatMessageType.GAMEMESSAGE, null, "testMessage", null, 0));
 		chatFilterPlugin.onChatMessage(new ChatMessage(mockMessageNode(null), ChatMessageType.GAMEMESSAGE, null, "testMessage", null, 0));
@@ -401,7 +402,7 @@ public class ChatFilterPluginTest
 	}
 
 	@Test
-	public void publicChatFilteredOnDuplicate()
+	public void publicChatFilteredOnDuplicate() throws ExecutionException
 	{
 		when(chatFilterConfig.collapsePlayerChat()).thenReturn(true);
 		when(chatFilterConfig.maxRepeatedPublicChats()).thenReturn(2);
