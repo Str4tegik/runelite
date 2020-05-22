@@ -398,4 +398,18 @@ public class ChatFilterPluginTest
 		assertEquals(1, client.getIntStack()[client.getIntStackSize() - 3]);
 		assertEquals("testMessage", client.getStringStack()[client.getStringStackSize() - 1]);
 	}
+
+	@Test
+	public void publicChatFilteredOnDuplicate() throws ExecutionException
+	{
+		when(chatFilterConfig.collapsePlayerChat()).thenReturn(true);
+		when(chatFilterConfig.maxRepeatedPublicChats()).thenReturn(2);
+		chatFilterPlugin.onChatMessage(new ChatMessage(mockMessageNode(1), ChatMessageType.PUBLICCHAT, "testName", "testMessage", null, 0));
+		chatFilterPlugin.onChatMessage(new ChatMessage(mockMessageNode(1), ChatMessageType.PUBLICCHAT, "testName", "testMessage", null, 0));
+		chatFilterPlugin.onChatMessage(new ChatMessage(mockMessageNode(1), ChatMessageType.PUBLICCHAT, "testName", "testMessage", null, 0));
+		ScriptCallbackEvent event = createCallbackEvent("testName", "testMessage", ChatMessageType.PUBLICCHAT);
+		chatFilterPlugin.onScriptCallbackEvent(event);
+
+		assertEquals(0, client.getIntStack()[client.getIntStackSize() - 3]);
+	}
 }
