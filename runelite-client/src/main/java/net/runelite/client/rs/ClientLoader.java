@@ -84,13 +84,15 @@ public class ClientLoader implements Supplier<Applet>
 	private static File PATCHED_CACHE = new File(RuneLite.CACHE_DIR, "patched.cache");
 
 	private ClientUpdateCheckMode updateCheckMode;
+	private final String javConfigUrl;
 	private Object client = null;
 
 	private WorldSupplier worldSupplier = new WorldSupplier();
 
-	public ClientLoader(ClientUpdateCheckMode updateCheckMode)
+	public ClientLoader(ClientUpdateCheckMode updateCheckMode, String javConfigUrl)
 	{
 		this.updateCheckMode = updateCheckMode;
+		this.javConfigUrl = javConfigUrl;
 	}
 
 	@Override
@@ -181,7 +183,7 @@ public class ClientLoader implements Supplier<Applet>
 
 	private RSConfig downloadConfig() throws IOException
 	{
-		HttpUrl url = HttpUrl.parse(RuneLiteProperties.getJavConfig());
+		HttpUrl url = HttpUrl.parse(javConfigUrl);
 		IOException err = null;
 		for (int attempt = 0; attempt < NUM_ATTEMPTS; attempt++)
 		{

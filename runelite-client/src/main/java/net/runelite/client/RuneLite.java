@@ -177,6 +177,9 @@ public class RuneLite
 		final OptionParser parser = new OptionParser();
 		parser.accepts("developer-mode", "Enable developer tools");
 		parser.accepts("debug", "Show extra debugging output");
+		parser.accepts("javconfig", "jav_config url")
+			.withRequiredArg()
+			.defaultsTo(RuneLiteProperties.getJavConfig());
 
 		final ArgumentAcceptingOptionSpec<File> sessionfile = parser.accepts("sessionfile", "Use a specified session file")
 			.withRequiredArg()
@@ -231,7 +234,7 @@ public class RuneLite
 
 		try
 		{
-			final ClientLoader clientLoader = new ClientLoader(options.valueOf(updateMode));
+			final ClientLoader clientLoader = new ClientLoader(options.valueOf(updateMode), (String) options.valueOf("javconfig"));
 
 			new Thread(() ->
 			{
