@@ -24,12 +24,15 @@
  */
 package net.runelite.client.plugins.agility;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.inject.Provides;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.inject.Inject;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -37,6 +40,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.ItemID;
 import static net.runelite.api.ItemID.AGILITY_ARENA_TICKET;
+import net.runelite.api.NPC;
 import net.runelite.api.Player;
 import net.runelite.api.Skill;
 import static net.runelite.api.Skill.AGILITY;
@@ -57,6 +61,8 @@ import net.runelite.api.events.GroundObjectDespawned;
 import net.runelite.api.events.GroundObjectSpawned;
 import net.runelite.api.events.ItemDespawned;
 import net.runelite.api.events.ItemSpawned;
+import net.runelite.api.events.NpcDespawned;
+import net.runelite.api.events.NpcSpawned;
 import net.runelite.api.events.StatChanged;
 import net.runelite.api.events.WallObjectChanged;
 import net.runelite.api.events.WallObjectDespawned;
@@ -78,7 +84,7 @@ import net.runelite.client.ui.overlay.infobox.InfoBoxManager;
 @PluginDescriptor(
 	name = "Agility",
 	description = "Show helpful information about agility courses and obstacles",
-	tags = {"grace", "marks", "overlay", "shortcuts", "skilling", "traps"}
+	tags = {"grace", "marks", "overlay", "shortcuts", "skilling", "traps", "sepulchre"}
 )
 @PluginDependency(XpTrackerPlugin.class)
 @Slf4j
@@ -86,8 +92,16 @@ public class AgilityPlugin extends Plugin
 {
 	private static final int AGILITY_ARENA_REGION_ID = 11157;
 
+	private static final Set<Integer> SEPULCHRE_NPCS = ImmutableSet.of(
+		9672, 9673, 9674,  // arrows
+		9669, 9670, 9671   // swords
+	);
+
 	@Getter
 	private final Map<TileObject, Obstacle> obstacles = new HashMap<>();
+
+	@Getter
+	private final Set<NPC> npcs = new HashSet<>();
 
 	@Getter
 	private final List<Tile> marksOfGrace = new ArrayList<>();
@@ -97,6 +111,9 @@ public class AgilityPlugin extends Plugin
 
 	@Inject
 	private AgilityOverlay agilityOverlay;
+
+	@Inject
+	private NpcOverlay npcOverlay;
 
 	@Inject
 	private LapCounterOverlay lapCounterOverlay;
@@ -142,6 +159,7 @@ public class AgilityPlugin extends Plugin
 	{
 		overlayManager.add(agilityOverlay);
 		overlayManager.add(lapCounterOverlay);
+		overlayManager.add(npcOverlay);
 		agilityLevel = client.getBoostedSkillLevel(Skill.AGILITY);
 	}
 
@@ -150,6 +168,7 @@ public class AgilityPlugin extends Plugin
 	{
 		overlayManager.remove(agilityOverlay);
 		overlayManager.remove(lapCounterOverlay);
+		overlayManager.remove(npcOverlay);
 		marksOfGrace.clear();
 		obstacles.clear();
 		session = null;
@@ -441,5 +460,24 @@ public class AgilityPlugin extends Plugin
 				obstacles.put(newObject, new Obstacle(tile, closestShortcut));
 			}
 		}
+	}
+
+	@Subscribe
+	public void onNpcSpawned(NpcSpawned npcSpawned)
+	{
+		NPC npc = npcSpawned.getNpc();
+
+		if (SEPULCHRE_NPCS.contains(npc.getId()))
+		{
+			npcs.add(npc);
+		}
+	}
+
+	@Subscribe
+	public void onNpcDespawned(NpcDespawned npcDespawned)
+	{
+		NPC npc = npcDespawned.getNpc();
+
+		npcs.remove(npc);
 	}
 }

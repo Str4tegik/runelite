@@ -220,4 +220,15 @@ public interface AgilityConfig extends Config
 	{
 		return Color.RED;
 	}
+
+	@ConfigItem(
+		keyName = "highlightSepulchreProjectiles",
+		name = "Mark Sepulchre Projectiles",
+		description = "Draws an overlay over the Sepulchre arrows",
+		position = 15
+	)
+	default boolean highlightSepulchreProjectiles()
+	{
+		return true;
+	}
 }
