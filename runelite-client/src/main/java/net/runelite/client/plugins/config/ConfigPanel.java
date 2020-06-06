@@ -39,6 +39,7 @@ import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 import javax.inject.Inject;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -252,7 +253,11 @@ class ConfigPanel extends PluginPanel
 		ConfigDescriptor cd = pluginConfig.getConfigDescriptor();
 
 		final Map<String, JPanel> sectionWidgets = new HashMap<>();
-		final Map<ConfigObject, JPanel> unorderedObjects = new HashMap<>();
+		final Map<ConfigObject, JPanel> toplevelPanels = new TreeMap<>((a, b) ->
+			ComparisonChain.start()
+				.compare(a.position(), b.position())
+				.compare(a.name(), b.name())
+				.result());
 
 		for (ConfigSectionDescriptor csd : cd.getSections())
 		{
@@ -313,7 +318,7 @@ class ConfigPanel extends PluginPanel
 
 			sectionWidgets.put(csd.getKey(), sectionContents);
 
-			unorderedObjects.put(csd, section);
+			toplevelPanels.put(csd, section);
 		}
 
 		for (ConfigItemDescriptor cid : cd.getItems())
@@ -536,7 +541,7 @@ class ConfigPanel extends PluginPanel
 			JPanel section = sectionWidgets.get(cid.getItem().section());
 			if (section == null)
 			{
-				unorderedObjects.put(cid, item);
+				toplevelPanels.put(cid, item);
 			}
 			else
 			{
@@ -544,12 +549,7 @@ class ConfigPanel extends PluginPanel
 			}
 		}
 
-		unorderedObjects.entrySet().stream()
-			.sorted((a, b) -> ComparisonChain.start()
-				.compare(a.getKey().position(), b.getKey().position())
-				.compare(a.getKey().name(), b.getKey().name())
-				.result())
-			.map(Map.Entry::getValue)
+		toplevelPanels.values()
 			.forEach(mainPanel::add);
 
 		JButton resetButton = new JButton("Reset");
