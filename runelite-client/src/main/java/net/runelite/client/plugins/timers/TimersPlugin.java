@@ -27,6 +27,7 @@ package net.runelite.client.plugins.timers;
 
 import com.google.inject.Provides;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.inject.Inject;
@@ -118,6 +119,9 @@ public class TimersPlugin extends Plugin
 	private TimerTimer freezeTimer;
 	private int freezeTime = -1; // time frozen, in game ticks
 
+	private TimerTimer staminaTimer;
+	private boolean wasWearingEndurance;
+
 	private int lastRaidVarb;
 	private int lastWildernessVarb;
 	private int lastVengCooldownVarb;
@@ -163,6 +167,7 @@ public class TimersPlugin extends Plugin
 		widgetHiddenChangedOnPvpWorld = false;
 		lastPoisonVarp = 0;
 		nextPoisonTick = 0;
+		staminaTimer = null;
 	}
 
 	@Subscribe
@@ -379,7 +384,7 @@ public class TimersPlugin extends Plugin
 			|| event.getId() == ItemID.EGNIOL_POTION_4))
 		{
 			// Needs menu option hook because mixes use a common drink message, distinct from their standard potion messages
-			createGameTimer(STAMINA);
+			createStaminaTimer();
 			return;
 		}
 
@@ -440,12 +445,13 @@ public class TimersPlugin extends Plugin
 
 		if (config.showStamina() && (event.getMessage().equals(STAMINA_DRINK_MESSAGE) || event.getMessage().equals(STAMINA_SHARED_DRINK_MESSAGE)))
 		{
-			createGameTimer(STAMINA);
+			createStaminaTimer();
 		}
 
-		if (config.showStamina() && (event.getMessage().equals(STAMINA_EXPIRED_MESSAGE) || event.getMessage().equals(GAUNTLET_ENTER_MESSAGE)))
+		if (event.getMessage().equals(STAMINA_EXPIRED_MESSAGE) || event.getMessage().equals(GAUNTLET_ENTER_MESSAGE))
 		{
 			removeGameTimer(STAMINA);
+			staminaTimer = null;
 		}
 
 		if (config.showAntiFire() && event.getMessage().equals(ANTIFIRE_DRINK_MESSAGE))
@@ -797,34 +803,44 @@ public class TimersPlugin extends Plugin
 	}
 
 	/**
-	 * remove SOTD timer when weapon is changed
-	 *
-	 * @param itemContainerChanged
+	 * Remove SOTD timer and update stamina timer when equipment is changed.
 	 */
 	@Subscribe
 	public void onItemContainerChanged(ItemContainerChanged itemContainerChanged)
 	{
-		ItemContainer container = itemContainerChanged.getItemContainer();
-		if (container == client.getItemContainer(InventoryID.EQUIPMENT))
+		if (itemContainerChanged.getContainerId() != InventoryID.EQUIPMENT.getId())
 		{
-			Item weapon = container.getItem(EquipmentInventorySlot.WEAPON.getSlotIdx());
+			return;
+		}
 
-			if (weapon == null)
-			{
-				removeGameTimer(STAFF_OF_THE_DEAD);
-				return;
-			}
+		ItemContainer container = itemContainerChanged.getItemContainer();
 
-			switch (weapon.getId())
+		Item weapon = container.getItem(EquipmentInventorySlot.WEAPON.getSlotIdx());
+		if (weapon == null ||
+			(weapon.getId() != ItemID.STAFF_OF_THE_DEAD &&
+				weapon.getId() != ItemID.TOXIC_STAFF_OF_THE_DEAD &&
+				weapon.getId() != ItemID.STAFF_OF_LIGHT &&
+				weapon.getId() != ItemID.TOXIC_STAFF_UNCHARGED))
+		{
+			// remove sotd timer if the staff has been unwielded
+			removeGameTimer(STAFF_OF_THE_DEAD);
+		}
+
+		if (wasWearingEndurance && staminaTimer != null)
+		{
+			Item ring = container.getItem(EquipmentInventorySlot.RING.getSlotIdx());
+
+			if (ring == null || ring.getId() != ItemID.RING_OF_ENDURANCE)
 			{
-				case ItemID.STAFF_OF_THE_DEAD:
-				case ItemID.TOXIC_STAFF_OF_THE_DEAD:
-				case ItemID.STAFF_OF_LIGHT:
-				case ItemID.TOXIC_STAFF_UNCHARGED:
-					// don't reset timer if still wielding staff
-					return;
-				default:
-					removeGameTimer(STAFF_OF_THE_DEAD);
+				wasWearingEndurance = false;
+				// Remaining duration gets divided by 2
+				Duration remainingDuration = Duration.between(Instant.now(), staminaTimer.getEndTime()).dividedBy(2);
+				// This relies on the chat message to be removed, which could be after the timer has been culled;
+				// so check there is still remaining time
+				if (!remainingDuration.isNegative() && !remainingDuration.isZero())
+				{
+					staminaTimer.setDuration(remainingDuration);
+				}
 			}
 		}
 	}
@@ -854,6 +870,16 @@ public class TimersPlugin extends Plugin
 		{
 			infoBoxManager.removeIf(t -> t instanceof TimerTimer && ((TimerTimer) t).getTimer().isRemovedOnDeath());
 		}
+	}
+
+	private void createStaminaTimer()
+	{
+		ItemContainer equipment = client.getItemContainer(InventoryID.EQUIPMENT);
+		Item item = equipment == null ? null : equipment.getItem(EquipmentInventorySlot.RING.getSlotIdx());
+		wasWearingEndurance = item != null && item.getId() == ItemID.RING_OF_ENDURANCE;
+
+		Duration duration = Duration.ofMinutes(wasWearingEndurance ? 4 : 2);
+		staminaTimer = createGameTimer(STAMINA, duration);
 	}
 
 	private TimerTimer createGameTimer(final GameTimer timer)
