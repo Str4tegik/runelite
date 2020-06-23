@@ -35,6 +35,7 @@ import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.inject.Provides;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -781,20 +782,33 @@ public class MenuEntrySwapperPlugin extends Plugin
 
 	private void swap(ArrayListMultimap<String, Integer> optionIndexes, MenuEntry[] entries, int index1, int index2)
 	{
-		MenuEntry entry = entries[index1];
-		entries[index1] = entries[index2];
-		entries[index2] = entry;
+		MenuEntry entry1 = entries[index1],
+			entry2 = entries[index2];
+
+		entries[index1] = entry2;
+		entries[index2] = entry1;
 
 		client.setMenuEntries(entries);
 
-		// Rebuild option indexes
-		optionIndexes.clear();
-		int idx = 0;
-		for (MenuEntry menuEntry : entries)
-		{
-			String option = Text.removeTags(menuEntry.getOption()).toLowerCase();
-			optionIndexes.put(option, idx++);
-		}
+		// Update optionIndexes
+		String option1 = Text.removeTags(entry1.getOption()).toLowerCase(),
+			option2 = Text.removeTags(entry2.getOption()).toLowerCase();
+
+		List<Integer> list1 = optionIndexes.get(option1),
+			list2 = optionIndexes.get(option2);
+
+		// call remove(Object) instead of remove(int)
+		list1.remove((Integer) index1);
+		list2.remove((Integer) index2);
+
+		sortedInsert(list1, index2);
+		sortedInsert(list2, index1);
+	}
+
+	private static <T extends Comparable<? super T>> void sortedInsert(List<T> list, T value)
+	{
+		int idx = Collections.binarySearch(list, value);
+		list.add(idx < 0 ? -idx - 1 : idx, value);
 	}
 
 	private void removeShiftClickCustomizationMenus()
