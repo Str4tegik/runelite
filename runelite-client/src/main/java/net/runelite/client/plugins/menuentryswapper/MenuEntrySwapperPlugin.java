@@ -753,7 +753,7 @@ public class MenuEntrySwapperPlugin extends Plugin
 				String entryTarget = Text.removeTags(entry.getTarget()).toLowerCase();
 
 				// Limit to the last index which is prior to the current entry
-				if (idx <= limit && entryTarget.equals(target))
+				if (idx < limit && entryTarget.equals(target))
 				{
 					return idx;
 				}
@@ -762,7 +762,7 @@ public class MenuEntrySwapperPlugin extends Plugin
 		else
 		{
 			// Without strict matching we have to iterate all entries up to the current limit...
-			for (int i = limit; i >= 0; i--)
+			for (int i = limit - 1; i >= 0; i--)
 			{
 				MenuEntry entry = entries[i];
 				String entryOption = Text.removeTags(entry.getOption()).toLowerCase();
