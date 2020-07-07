@@ -53,6 +53,7 @@ public class InfoBoxComponent implements LayoutableRenderableEntity
 	private Dimension preferredSize = new Dimension(DEFAULT_SIZE, DEFAULT_SIZE);
 	private String text;
 	private Color color = Color.WHITE;
+	@Setter
 	private Color backgroundColor = ComponentConstants.STANDARD_BACKGROUND_COLOR;
 	private BufferedImage image;
 	@Getter

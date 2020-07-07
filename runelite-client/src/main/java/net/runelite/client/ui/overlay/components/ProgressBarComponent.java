@@ -59,6 +59,7 @@ public class ProgressBarComponent implements LayoutableRenderableEntity
 	private String leftLabel;
 	private String rightLabel;
 	private Color foregroundColor = new Color(82, 161, 82);
+	@Setter
 	private Color backgroundColor = new Color(255, 255, 255, 127);
 	private Color fontColor = Color.WHITE;
 	private Point preferredLocation = new Point();

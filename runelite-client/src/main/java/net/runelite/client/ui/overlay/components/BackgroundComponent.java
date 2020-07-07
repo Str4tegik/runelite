@@ -44,6 +44,7 @@ public class BackgroundComponent implements RenderableEntity
 	private static final float INNER_COLOR_OFFSET = 1 + COLOR_OFFSET;
 	private static final float ALPHA_COLOR_OFFSET = 1 + 2 * COLOR_OFFSET;
 
+	@Setter
 	private Color backgroundColor = ComponentConstants.STANDARD_BACKGROUND_COLOR;
 	private Rectangle rectangle = new Rectangle();
 	private boolean fill = true;

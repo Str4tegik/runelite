@@ -43,6 +43,7 @@ public class TooltipComponent implements LayoutableRenderableEntity
 	private static final int MOD_ICON_WIDTH = 13; // they are generally 13px wide
 
 	private String text;
+	@Setter
 	private Color backgroundColor = ComponentConstants.STANDARD_BACKGROUND_COLOR;
 	private Point position = new Point();
 	private IndexedSprite[] modIcons;
