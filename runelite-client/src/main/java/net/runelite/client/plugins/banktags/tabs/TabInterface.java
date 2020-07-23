@@ -118,8 +118,6 @@ public class TabInterface
 	private static final String OPEN_TAB_MENU = "View tag tabs";
 	private static final String SHOW_WORN = "Show worn items";
 	private static final String SHOW_SETTINGS = "Show menu";
-	private static final String HIDE_WORN = "Hide worn items";
-	private static final String HIDE_SETTINGS = "Hide menu";
 	private static final String SHOW_TUTORIAL = "Show tutorial";
 	private static final int TAB_HEIGHT = 40;
 	private static final int TAB_WIDTH = 39;
@@ -891,6 +889,7 @@ public class TabInterface
 	{
 		if (activeTab != null && activeTab.getTag().equals(tag))
 		{
+			activateTab(null);
 			bankSearch.reset(true);
 		}
 
