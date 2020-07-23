@@ -408,10 +408,10 @@ public class TabInterface
 
 				TagTab tab = tabManager.find(Text.removeTags(clicked.getName()));
 
+				rememberedSearch = "";
 				if (tab.equals(activeTab))
 				{
 					bankSearch.reset(true);
-					rememberedSearch = "";
 
 					clientThread.invokeLater(() -> client.runScript(ScriptID.MESSAGE_LAYER_CLOSE, 0, 0));
 				}
@@ -423,6 +423,7 @@ public class TabInterface
 				client.playSoundEffect(SoundEffectID.UI_BOOP);
 				break;
 			case Tab.CHANGE_ICON:
+				rememberedSearch = client.getVar(VarClientStr.INPUT_TEXT);
 				final String tag = Text.removeTags(event.getOpbase());
 				searchProvider
 					.tooltipText(CHANGE_ICON + " (" + tag + ")")
@@ -440,6 +441,7 @@ public class TabInterface
 					.build();
 				break;
 			case Tab.DELETE_TAB:
+				rememberedSearch = client.getVar(VarClientStr.INPUT_TEXT);
 				String target = Text.standardize(event.getOpbase());
 				chatboxPanelManager.openTextMenuInput("Delete " + target)
 					.option("1. Tab and tag from all items", () ->
@@ -959,6 +961,8 @@ public class TabInterface
 
 	private void renameTab(String oldTag)
 	{
+		rememberedSearch = client.getVar(VarClientStr.INPUT_TEXT);
+
 		chatboxPanelManager.openTextInput("Enter new tag name for tag \"" + oldTag + "\":")
 			.addCharValidator(FILTERED_CHARS)
 			.onDone((Consumer<String>) (newTag) -> clientThread.invoke(() ->
