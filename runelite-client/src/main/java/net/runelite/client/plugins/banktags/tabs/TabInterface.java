@@ -85,6 +85,7 @@ import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.chatbox.ChatboxItemSearch;
 import net.runelite.client.game.chatbox.ChatboxPanelManager;
 import net.runelite.client.plugins.banktags.BankTagsConfig;
+import net.runelite.client.plugins.banktags.BankTagsPlugin;
 import static net.runelite.client.plugins.banktags.BankTagsPlugin.TAG_SEARCH;
 import static net.runelite.client.plugins.banktags.BankTagsPlugin.VAR_TAG_SUFFIX;
 import net.runelite.client.plugins.banktags.TagManager;
@@ -392,9 +393,9 @@ public class TabInterface
 				break;
 			case NewTab.OPEN_TAB_MENU:
 				client.setVarbit(Varbits.CURRENT_BANK_TAB, 0);
-//				openTag(TAB_MENU_KEY);
-				tagTabActive = true;
-				bankSearch.layoutBank();
+				openTag(TAB_MENU_KEY);
+//				tagTabActive = true;
+//				bankSearch.layoutBank();
 				break;
 		}
 	}
@@ -1183,6 +1184,7 @@ public class TabInterface
 	private void openTag(final String tag)
 	{
 		activateTab(tabManager.find(tag));
+		tagTabActive = BankTagsPlugin.TAG_TABS_CONFIG.equals(tag);
 		bankSearch.layoutBank();
 
 		// When tab is selected with search window open, the search window closes but the search button
