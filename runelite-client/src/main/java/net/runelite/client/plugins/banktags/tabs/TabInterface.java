@@ -150,6 +150,7 @@ public class TabInterface
 	private ChatboxItemSearch searchProvider;
 	@Getter
 	private TagTab activeTab;
+	private boolean tagTabActive;
 	private int maxTabs;
 	private int currentTabIndex;
 	private Instant startScroll = Instant.now();
@@ -391,7 +392,9 @@ public class TabInterface
 				break;
 			case NewTab.OPEN_TAB_MENU:
 				client.setVarbit(Varbits.CURRENT_BANK_TAB, 0);
-				openTag(TAB_MENU_KEY);
+//				openTag(TAB_MENU_KEY);
+				tagTabActive = true;
+				bankSearch.layoutBank();
 				break;
 		}
 	}
@@ -545,7 +548,8 @@ public class TabInterface
 
 	private boolean isTabMenuActive()
 	{
-		return TAB_MENU.equals(client.getVar(VarClientStr.INPUT_TEXT));
+		return tagTabActive;
+		//return TAB_MENU.equals(client.getVar(VarClientStr.INPUT_TEXT));
 	}
 
 	public void handleScriptEvent(final ScriptCallbackEvent event)
@@ -1015,6 +1019,8 @@ public class TabInterface
 			tab.revalidate();
 			activeTab = tagTab;
 		}
+
+		tagTabActive = false;
 	}
 
 	private void updateBounds()
