@@ -85,7 +85,6 @@ import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.chatbox.ChatboxItemSearch;
 import net.runelite.client.game.chatbox.ChatboxPanelManager;
 import net.runelite.client.plugins.banktags.BankTagsConfig;
-import net.runelite.client.plugins.banktags.BankTagsPlugin;
 import static net.runelite.client.plugins.banktags.BankTagsPlugin.TAG_SEARCH;
 import static net.runelite.client.plugins.banktags.BankTagsPlugin.VAR_TAG_SUFFIX;
 import net.runelite.client.plugins.banktags.TagManager;
@@ -149,12 +148,11 @@ public class TabInterface
 	private final Rectangle canvasBounds = new Rectangle();
 
 	private ChatboxItemSearch searchProvider;
+	@Getter
 	private TagTab activeTab;
 	private int maxTabs;
 	private int currentTabIndex;
 	private Instant startScroll = Instant.now();
-	private String rememberedSearch;
-	private boolean waitSearchTick;
 
 	@Getter
 	private Widget upButton;
@@ -410,15 +408,14 @@ public class TabInterface
 
 				if (tab.equals(activeTab))
 				{
-					bankSearch.reset(true);
-					rememberedSearch = "";
-
-					clientThread.invokeLater(() -> client.runScript(ScriptID.MESSAGE_LAYER_CLOSE, 0, 0));
+					activateTab(null);
 				}
 				else
 				{
 					openTag(Text.removeTags(clicked.getName()));
 				}
+
+				bankSearch.reset(true);
 
 				client.playSoundEffect(SoundEffectID.UI_BOOP);
 				break;
@@ -481,8 +478,6 @@ public class TabInterface
 		currentTabIndex = 0;
 		maxTabs = 0;
 		parent = null;
-		waitSearchTick = false;
-		rememberedSearch = "";
 
 		if (upButton != null)
 		{
@@ -499,8 +494,6 @@ public class TabInterface
 		if (isHidden())
 		{
 			parent = null;
-			waitSearchTick = false;
-			rememberedSearch = "";
 
 			saveTab();
 			return;
@@ -510,57 +503,6 @@ public class TabInterface
 		if (parent.isSelfHidden())
 		{
 			return;
-		}
-
-		if (activeTab != null && client.getVar(VarClientInt.INPUT_TYPE) == InputType.RUNELITE_CHATBOX_PANEL.getType())
-		{
-			// don't reset active tab if we are editing tags
-			updateBounds();
-			scrollTab(0);
-			return;
-		}
-
-		String str = client.getVar(VarClientStr.INPUT_TEXT);
-
-		if (Strings.isNullOrEmpty(str))
-		{
-			str = "";
-		}
-
-		Widget bankTitle = client.getWidget(WidgetInfo.BANK_TITLE_BAR);
-		if (bankTitle != null && !bankTitle.isHidden() && !str.startsWith(TAG_SEARCH))
-		{
-			str = bankTitle.getText().replaceFirst("Showing items: ", "");
-
-			if (str.startsWith("Tab "))
-			{
-				str = "";
-			}
-		}
-
-		str = Text.standardize(str);
-
-		if (str.startsWith(BankTagsPlugin.TAG_SEARCH))
-		{
-			activateTab(tabManager.find(str.substring(TAG_SEARCH.length())));
-		}
-		else
-		{
-			activateTab(null);
-		}
-
-		if (!waitSearchTick
-			&& activeTab == null
-			&& !Strings.isNullOrEmpty(rememberedSearch)
-			&& client.getVar(VarClientInt.INPUT_TYPE) == InputType.NONE.getType())
-		{
-			bankSearch.reset(true);
-			bankSearch.search(InputType.NONE, rememberedSearch, true);
-			rememberedSearch = "";
-		}
-		else if (waitSearchTick)
-		{
-			waitSearchTick = false;
 		}
 
 		updateBounds();
@@ -724,17 +666,6 @@ public class TabInterface
 			chatboxPanelManager.close();
 		}
 
-		if ((event.getWidgetId() == WidgetInfo.BANK_ITEM_CONTAINER.getId()
-				|| event.getWidgetId() == WidgetInfo.BANK_INVENTORY_ITEMS_CONTAINER.getId())
-			&& event.getMenuAction() == MenuAction.CC_OP_LOW_PRIORITY
-			&& (event.getMenuOption().equalsIgnoreCase("withdraw-x")
-				|| event.getMenuOption().equalsIgnoreCase("deposit-x")))
-		{
-			waitSearchTick = true;
-			rememberedSearch = client.getVar(VarClientStr.INPUT_TEXT);
-			bankSearch.search(InputType.NONE, rememberedSearch, true);
-		}
-
 		if (activeTab != null
 			&& event.getMenuOption().equals("Search")
 			&& client.getWidget(WidgetInfo.BANK_SEARCH_BUTTON_BACKGROUND).getSpriteId() != SpriteID.EQUIPMENT_SLOT_SELECTED)
@@ -773,14 +704,6 @@ public class TabInterface
 			|| (event.getWidgetId() == WidgetInfo.BANK_TUTORIAL_BUTTON.getId() && event.getMenuOption().equals(SHOW_TUTORIAL))))
 		{
 			saveTab();
-			rememberedSearch = TAG_SEARCH + activeTab.getTag();
-		}
-		else if (!Strings.isNullOrEmpty(rememberedSearch) && ((event.getWidgetId() == WidgetInfo.BANK_EQUIPMENT_BUTTON.getId() && event.getMenuOption().equals(HIDE_WORN))
-				|| (event.getWidgetId() == WidgetInfo.BANK_SETTINGS_BUTTON.getId() && event.getMenuOption().equals(HIDE_SETTINGS))))
-		{
-			bankSearch.reset(true);
-			bankSearch.search(InputType.NONE, rememberedSearch, true);
-			rememberedSearch = "";
 		}
 	}
 
@@ -1253,8 +1176,8 @@ public class TabInterface
 
 	private void openTag(final String tag)
 	{
-		bankSearch.search(InputType.SEARCH, TAG_SEARCH + tag, true);
 		activateTab(tabManager.find(tag));
+		bankSearch.layoutBank();
 
 		// When tab is selected with search window open, the search window closes but the search button
 		// stays highlighted, this solves that issue
