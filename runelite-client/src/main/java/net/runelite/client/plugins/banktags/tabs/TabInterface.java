@@ -149,6 +149,7 @@ public class TabInterface
 	private ChatboxItemSearch searchProvider;
 	@Getter
 	private TagTab activeTab;
+	@Getter
 	private boolean tagTabActive;
 	private int maxTabs;
 	private int currentTabIndex;
@@ -578,17 +579,17 @@ public class TabInterface
 			case "beforeBankLayout":
 				setTabMenuVisible(false);
 				break;
-			case "isTabMenuActive":
-				if (!isTabMenuActive())
-				{
-					intStack[intStackSize - 1] = 0;
-					return;
-				}
-
-				// Must set the bank title because we are skipping it in scripts
-				client.getWidget(WidgetInfo.BANK_TITLE_BAR).setText("Showing items: " + ColorUtil.wrapWithColorTag(TAB_MENU, Color.red));
-				intStack[intStackSize - 1] = 1;
-				break;
+//			case "isTabMenuActive":
+//				if (!isTabMenuActive())
+//				{
+//					intStack[intStackSize - 1] = 0;
+//					return;
+//				}
+//
+//				// Must set the bank title because we are skipping it in scripts
+//				client.getWidget(WidgetInfo.BANK_TITLE_BAR).setText("Showing items: " + ColorUtil.wrapWithColorTag(TAB_MENU, Color.red));
+//				intStack[intStackSize - 1] = 1;
+//				break;
 		}
 	}
 

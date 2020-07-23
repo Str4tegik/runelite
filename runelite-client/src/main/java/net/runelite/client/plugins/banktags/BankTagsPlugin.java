@@ -482,7 +482,13 @@ public class BankTagsPlugin extends Plugin implements MouseWheelListener
 			// bankkmain_build will reset the bank title to "The Bank of Gielinor". So apply our
 			// own title.
 			TagTab activeTab = tabInterface.getActiveTab();
-			if (activeTab != null)
+			if (tabInterface.isTagTabActive())
+			{
+				// Tag tab tab has its own title since it isn't a real tag
+				Widget bankTitle = client.getWidget(WidgetInfo.BANK_TITLE_BAR);
+				bankTitle.setText("Tag tab tab");
+			}
+			else if (activeTab != null)
 			{
 				Widget bankTitle = client.getWidget(WidgetInfo.BANK_TITLE_BAR);
 				bankTitle.setText("Tag tab <col=ff0000>" + activeTab.getTag() + "</col>");
