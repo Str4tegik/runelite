@@ -520,37 +520,21 @@ public class TabInterface
 			return;
 		}
 
-		String str = client.getVar(VarClientStr.INPUT_TEXT);
-
-		if (Strings.isNullOrEmpty(str))
+		// If meslayer is open with some other input, prefer our remembered search before looking at input text
+		String searchStr = !Strings.isNullOrEmpty(rememberedSearch) ?
+			rememberedSearch : client.getVar(VarClientStr.INPUT_TEXT);
+		if (searchStr.startsWith(BankTagsPlugin.TAG_SEARCH))
 		{
-			str = "";
-		}
-
-		Widget bankTitle = client.getWidget(WidgetInfo.BANK_TITLE_BAR);
-		if (bankTitle != null && !bankTitle.isHidden() && !str.startsWith(TAG_SEARCH))
-		{
-			str = bankTitle.getText().replaceFirst("Showing items: ", "");
-
-			if (str.startsWith("Tab "))
-			{
-				str = "";
-			}
-		}
-
-		str = Text.standardize(str);
-
-		if (str.startsWith(BankTagsPlugin.TAG_SEARCH))
-		{
-			activateTab(tabManager.find(str.substring(TAG_SEARCH.length())));
+			activateTab(tabManager.find(searchStr.substring(TAG_SEARCH.length())));
 		}
 		else
 		{
 			activateTab(null);
 		}
 
+		// Re-do the search after a meslayer close for Withdraw/Deposit X. Otherwise the search gets reset despite
+		// the tab still being active.
 		if (!waitSearchTick
-			&& activeTab == null
 			&& !Strings.isNullOrEmpty(rememberedSearch)
 			&& client.getVar(VarClientInt.INPUT_TYPE) == InputType.NONE.getType())
 		{
