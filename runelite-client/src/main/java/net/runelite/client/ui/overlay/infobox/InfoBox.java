@@ -61,6 +61,10 @@ public abstract class InfoBox
 	@Setter
 	private List<OverlayMenuEntry> menuEntries = new ArrayList<>();
 
+	@Getter
+	@Setter
+	private boolean outlineText;
+
 	public InfoBox(BufferedImage image, @Nonnull Plugin plugin)
 	{
 		this.plugin = plugin;
