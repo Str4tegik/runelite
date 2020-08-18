@@ -41,6 +41,7 @@ class AbsorptionCounter extends Counter
 	{
 		super(image, plugin, absorption);
 		this.threshold = threshold;
+		setOutlineText(true);
 	}
 
 	@Override
