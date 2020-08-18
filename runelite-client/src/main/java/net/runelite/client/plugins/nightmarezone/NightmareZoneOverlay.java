@@ -28,20 +28,17 @@ import java.awt.Dimension;
 import java.awt.Graphics2D;
 import javax.inject.Inject;
 import net.runelite.api.Client;
-import net.runelite.api.ItemID;
 import static net.runelite.api.MenuAction.RUNELITE_OVERLAY_CONFIG;
 import net.runelite.api.VarPlayer;
 import net.runelite.api.Varbits;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetInfo;
-import net.runelite.client.game.ItemManager;
 import static net.runelite.client.ui.overlay.OverlayManager.OPTION_CONFIGURE;
 import net.runelite.client.ui.overlay.OverlayMenuEntry;
 import net.runelite.client.ui.overlay.OverlayPanel;
 import net.runelite.client.ui.overlay.OverlayPosition;
 import net.runelite.client.ui.overlay.OverlayPriority;
 import net.runelite.client.ui.overlay.components.LineComponent;
-import net.runelite.client.ui.overlay.infobox.InfoBoxManager;
 import net.runelite.client.util.QuantityFormatter;
 
 class NightmareZoneOverlay extends OverlayPanel
@@ -49,18 +46,12 @@ class NightmareZoneOverlay extends OverlayPanel
 	private final Client client;
 	private final NightmareZoneConfig config;
 	private final NightmareZonePlugin plugin;
-	private final InfoBoxManager infoBoxManager;
-	private final ItemManager itemManager;
-
-	private AbsorptionCounter absorptionCounter;
 
 	@Inject
 	NightmareZoneOverlay(
 			Client client,
 			NightmareZoneConfig config,
-			NightmareZonePlugin plugin,
-			InfoBoxManager infoBoxManager,
-			ItemManager itemManager)
+			NightmareZonePlugin plugin)
 	{
 		super(plugin);
 		setPosition(OverlayPosition.TOP_LEFT);
@@ -68,8 +59,6 @@ class NightmareZoneOverlay extends OverlayPanel
 		this.client = client;
 		this.config = config;
 		this.plugin = plugin;
-		this.infoBoxManager = infoBoxManager;
-		this.itemManager = itemManager;
 		getMenuEntries().add(new OverlayMenuEntry(RUNELITE_OVERLAY_CONFIG, OPTION_CONFIGURE, "NMZ overlay"));
 	}
 
@@ -78,15 +67,11 @@ class NightmareZoneOverlay extends OverlayPanel
 	{
 		if (!plugin.isInNightmareZone() || !config.moveOverlay())
 		{
-			if (absorptionCounter != null)
+			// Restore original widget
+			Widget nmzWidget = client.getWidget(WidgetInfo.NIGHTMARE_ZONE);
+			if (nmzWidget != null)
 			{
-				removeAbsorptionCounter();
-				// Restore original widget
-				Widget nmzWidget = client.getWidget(WidgetInfo.NIGHTMARE_ZONE);
-				if (nmzWidget != null)
-				{
-					nmzWidget.setHidden(false);
-				}
+				nmzWidget.setHidden(false);
 			}
 			return null;
 		}
@@ -97,8 +82,6 @@ class NightmareZoneOverlay extends OverlayPanel
 		{
 			nmzWidget.setHidden(true);
 		}
-
-		renderAbsorptionCounter();
 
 		final int currentPoints = client.getVar(Varbits.NMZ_POINTS);
 		final int totalPoints = currentPoints + client.getVar(VarPlayer.NMZ_REWARD_POINTS);
@@ -117,53 +100,5 @@ class NightmareZoneOverlay extends OverlayPanel
 			.build());
 
 		return super.render(graphics);
-	}
-
-	private void renderAbsorptionCounter()
-	{
-		int absorptionPoints = client.getVar(Varbits.NMZ_ABSORPTION);
-		if (absorptionPoints == 0)
-		{
-			if (absorptionCounter != null)
-			{
-				removeAbsorptionCounter();
-				absorptionCounter = null;
-			}
-		}
-		else if (config.moveOverlay())
-		{
-			if (absorptionCounter == null)
-			{
-				addAbsorptionCounter(absorptionPoints);
-			}
-			else
-			{
-				absorptionCounter.setCount(absorptionPoints);
-			}
-		}
-	}
-
-	private void addAbsorptionCounter(int startValue)
-	{
-		absorptionCounter = new AbsorptionCounter(itemManager.getImage(ItemID.ABSORPTION_4), plugin, startValue, config.absorptionThreshold());
-		absorptionCounter.setAboveThresholdColor(config.absorptionColorAboveThreshold());
-		absorptionCounter.setBelowThresholdColor(config.absorptionColorBelowThreshold());
-		infoBoxManager.addInfoBox(absorptionCounter);
-	}
-
-	public void removeAbsorptionCounter()
-	{
-		infoBoxManager.removeInfoBox(absorptionCounter);
-		absorptionCounter = null;
-	}
-
-	public void updateConfig()
-	{
-		if (absorptionCounter != null)
-		{
-			absorptionCounter.setAboveThresholdColor(config.absorptionColorAboveThreshold());
-			absorptionCounter.setBelowThresholdColor(config.absorptionColorBelowThreshold());
-			absorptionCounter.setThreshold(config.absorptionThreshold());
-		}
 	}
 }

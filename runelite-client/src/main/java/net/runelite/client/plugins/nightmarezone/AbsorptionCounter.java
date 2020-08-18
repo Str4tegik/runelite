@@ -31,7 +31,7 @@ import net.runelite.client.plugins.Plugin;
 import net.runelite.client.ui.overlay.infobox.Counter;
 
 @Setter
-public class AbsorptionCounter extends Counter
+class AbsorptionCounter extends Counter
 {
 	private int threshold;
 	private Color aboveThresholdColor = Color.GREEN;
@@ -56,7 +56,7 @@ public class AbsorptionCounter extends Counter
 			return belowThresholdColor;
 		}
 	}
-	
+
 	@Override
 	public String getTooltip()
 	{

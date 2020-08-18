@@ -32,18 +32,21 @@ import javax.inject.Inject;
 import lombok.Getter;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
+import net.runelite.api.ItemID;
 import net.runelite.api.Varbits;
 import net.runelite.api.events.ChatMessage;
-import net.runelite.client.events.ConfigChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetInfo;
 import net.runelite.client.Notifier;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.events.ConfigChanged;
+import net.runelite.client.game.ItemManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
+import net.runelite.client.ui.overlay.infobox.InfoBoxManager;
 import net.runelite.client.util.Text;
 
 @PluginDescriptor(
@@ -72,6 +75,12 @@ public class NightmareZonePlugin extends Plugin
 	@Inject
 	private NightmareZoneOverlay overlay;
 
+	@Inject
+	private InfoBoxManager infoBoxManager;
+
+	@Inject
+	private ItemManager itemManager;
+
 	@Getter
 	private int pointsPerHour;
 
@@ -83,11 +92,13 @@ public class NightmareZonePlugin extends Plugin
 	private boolean overloadNotificationSend = false;
 	private Instant lastOverload;
 
+	private AbsorptionCounter absorptionCounter;
+
 	@Override
 	protected void startUp() throws Exception
 	{
 		overlayManager.add(overlay);
-		overlay.removeAbsorptionCounter();
+		removeAbsorptionCounter();
 
 		overloadNotificationSend = false;
 	}
@@ -96,7 +107,7 @@ public class NightmareZonePlugin extends Plugin
 	protected void shutDown() throws Exception
 	{
 		overlayManager.remove(overlay);
-		overlay.removeAbsorptionCounter();
+		removeAbsorptionCounter();
 
 		Widget nmzWidget = client.getWidget(WidgetInfo.NIGHTMARE_ZONE);
 
@@ -111,7 +122,7 @@ public class NightmareZonePlugin extends Plugin
 	@Subscribe
 	public void onConfigChanged(ConfigChanged event)
 	{
-		overlay.updateConfig();
+		updateConfig();
 	}
 
 	@Provides
@@ -135,8 +146,15 @@ public class NightmareZonePlugin extends Plugin
 				resetPointsPerHour();
 			}
 
+			if (absorptionCounter != null)
+			{
+				removeAbsorptionCounter();
+			}
+
 			return;
 		}
+
+		addAbsorptionCounter();
 
 		if (config.absorptionNotification())
 		{
@@ -279,5 +297,53 @@ public class NightmareZonePlugin extends Plugin
 
 		// NMZ and the KBD lair uses the same region ID but NMZ uses planes 1-3 and KBD uses plane 0
 		return client.getLocalPlayer().getWorldLocation().getPlane() > 0 && Arrays.equals(client.getMapRegions(), NMZ_MAP_REGION);
+	}
+
+	private void addAbsorptionCounter()
+	{
+		int absorptionPoints = client.getVar(Varbits.NMZ_ABSORPTION);
+		if (absorptionPoints == 0)
+		{
+			if (absorptionCounter != null)
+			{
+				removeAbsorptionCounter();
+				absorptionCounter = null;
+			}
+		}
+		else if (config.moveOverlay())
+		{
+			if (absorptionCounter == null)
+			{
+				addAbsorptionCounter(absorptionPoints);
+			}
+			else
+			{
+				absorptionCounter.setCount(absorptionPoints);
+			}
+		}
+	}
+
+	private void addAbsorptionCounter(int startValue)
+	{
+		absorptionCounter = new AbsorptionCounter(itemManager.getImage(ItemID.ABSORPTION_4), this, startValue, config.absorptionThreshold());
+		absorptionCounter.setAboveThresholdColor(config.absorptionColorAboveThreshold());
+		absorptionCounter.setBelowThresholdColor(config.absorptionColorBelowThreshold());
+		infoBoxManager.addInfoBox(absorptionCounter);
+	}
+
+	private void removeAbsorptionCounter()
+	{
+		infoBoxManager.removeInfoBox(absorptionCounter);
+		absorptionCounter = null;
+	}
+
+	private void updateConfig()
+	{
+		if (absorptionCounter != null)
+		{
+			absorptionCounter.setAboveThresholdColor(config.absorptionColorAboveThreshold());
+			absorptionCounter.setBelowThresholdColor(config.absorptionColorBelowThreshold());
+			absorptionCounter.setThreshold(config.absorptionThreshold());
+		}
 	}
 }
